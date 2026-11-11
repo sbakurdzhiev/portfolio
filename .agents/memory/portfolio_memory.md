@@ -1,6 +1,9 @@
 # Portfolio Project Memory
 
 ## 🏗️ Architecture & Component Map
+* **Logo (`src/components/Logo.jsx`)**: Bespoke tactical vector SVG uniting Kubernetes helm/nodes with `SB` monogram and terminal prompt chevron.
+* **Theme Switcher (`src/components/ThemeSwitcher.jsx`)**: 4 theme palettes (`cyber`, `amber`, `tokyonight`, `matrix`) switchable via UI and CLI.
+* **Typewriter (`src/components/TypewriterText.jsx`)**: Animated typing cadence for roles and motto.
 * **App Root (`src/App.jsx`)**: Manages navigation tabs, audio toggle state, CRT scanlines toggle, global keybindings (number keys `1-6` for tabs, backtick `` ` `` for CLI).
 * **Telemetry Ribbon (`src/components/HeaderTelemetry.jsx`)**: Displays cluster heartbeat (`k8s-master-sofia-01 [READY]`), live ping (14ms jitter), UTC clock, and quick toggles.
 * **Overview Section (`src/components/OverviewSection.jsx`)**: Hero ASCII banner, status chips, quick action buttons, metric dials, and dual human/YAML profile view.

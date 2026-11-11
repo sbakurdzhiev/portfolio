@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { 
   Terminal, ShieldCheck, Server, GitBranch, 
-  MapPin, Users, Layers, ExternalLink, Play
+  MapPin, Users, Layers, ExternalLink, Play, Sparkles
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { TypewriterText } from './TypewriterText';
+import { LogoShowcaseModal } from './LogoShowcaseModal';
 import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
 export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
   const [viewMode, setViewMode] = useState('human'); // 'human' | 'yaml'
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
   const asciiLogo = `
   ███████╗████████╗███████╗███████╗ █████╗ ███╗   ██╗
@@ -38,18 +40,44 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
               <span className="text-slate-300">OPEN TO REMOTE WORLDWIDE</span>
             </div>
 
-            {/* Title / Headline with Logo & Typewriter */}
+            {/* Title / Headline with Interactive Logo & Typewriter */}
             <div className="flex items-start gap-4">
-              <div className="hidden sm:block pt-1">
-                <Logo size={64} />
+              <div 
+                className="hidden sm:block pt-1 group cursor-pointer relative"
+                onClick={() => {
+                  sound.playBeep(650, 0.05);
+                  setIsLogoModalOpen(true);
+                }}
+                title="Click to Choose Logo Template"
+              >
+                <Logo size={68} />
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded bg-cyber-panel border border-cyber-cyan text-[8px] text-cyber-cyan font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                  SWAP
+                </span>
               </div>
+
               <div className="flex-1">
-                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-3">
-                  {profileData.name}
-                  <span className="text-sm font-normal text-cyber-emerald hidden sm:inline">
-                    [k8s-master]
-                  </span>
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-3">
+                    {profileData.name}
+                    <span className="text-sm font-normal text-cyber-emerald hidden sm:inline">
+                      [k8s-master]
+                    </span>
+                  </h2>
+
+                  <button
+                    onClick={() => {
+                      sound.playBeep(650, 0.05);
+                      setIsLogoModalOpen(true);
+                    }}
+                    className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-[10px] text-cyber-cyan font-mono flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Choose from 4 Bespoke Logo Templates"
+                  >
+                    <Sparkles className="w-3 h-3 text-cyber-emerald" />
+                    <span>TEMPLATES [4]</span>
+                  </button>
+                </div>
+
                 <div className="text-base sm:text-xl text-cyber-cyan font-mono mt-1 font-semibold min-h-[30px] flex items-center">
                   <TypewriterText />
                 </div>
@@ -289,6 +317,12 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
           </pre>
         )}
       </div>
+
+      {/* Logo Selector Modal */}
+      <LogoShowcaseModal
+        isOpen={isLogoModalOpen}
+        onClose={() => setIsLogoModalOpen(false)}
+      />
     </div>
   );
 };

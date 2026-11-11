@@ -7,6 +7,7 @@ const AVAILABLE_COMMANDS = [
   'help', 'bio', 'skills', 'projects', 'pipeline run', 
   'kubectl get nodes', 'kubectl get pods', 'kubectl get crds',
   'theme', 'theme cyber', 'theme amber', 'theme tokyonight', 'theme matrix',
+  'logo', 'logo helm', 'logo monogram', 'logo shield', 'logo pipeline',
   'contact', 'whoami', 'clear', 'sudo rm -rf /', 'matrix', 'exit'
 ];
 
@@ -16,7 +17,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [outputLines, setOutputLines] = useState([
     { text: '☸️  Stefan Bakurdzhiev Tactical Kubernetes & OpenShift Interactive Shell [v4.14-k8s]', color: 'text-cyber-cyan font-bold' },
-    { text: 'Type "help" to view tactical commands or "theme [cyber|amber|tokyonight|matrix]" to switch visual palettes.', color: 'text-slate-400' },
+    { text: 'Type "help" to view tactical commands, "theme [name]" for palettes, or "logo [name]" to switch insignia.', color: 'text-slate-400' },
     { text: '----------------------------------------------------------------------------------', color: 'text-cyber-border' },
   ]);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -96,6 +97,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  projects        - List open-source architectures & handbooks', color: 'text-slate-300' },
         { text: '  pipeline run    - Execute live automated GitOps CI/CD runner', color: 'text-cyber-emerald font-bold' },
         { text: '  theme [name]    - Switch palette: cyber, amber, tokyonight, matrix', color: 'text-cyber-cyan' },
+        { text: '  logo [name]     - Switch insignia: helm, monogram, shield, pipeline', color: 'text-cyber-cyan font-bold' },
         { text: '  kubectl get nodes - List cluster node status and versions', color: 'text-slate-300' },
         { text: '  kubectl get pods  - List running microservice pods in production', color: 'text-slate-300' },
         { text: '  kubectl get crds  - View active Custom Resource Definitions', color: 'text-slate-300' },
@@ -103,6 +105,32 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  clear           - Wipe the terminal buffer', color: 'text-slate-300' },
         { text: '  sudo rm -rf /   - Root access attempt (warning: sandbox)', color: 'text-red-400' },
       ];
+    } else if (lower.startsWith('logo')) {
+      const parts = lower.split(/\s+/);
+      const chosen = parts[1];
+      const valid = ['helm', 'monogram', 'shield', 'pipeline'];
+
+      if (!chosen) {
+        responseEntries = [
+          { text: 'AVAILABLE LOGO TEMPLATES:', color: 'text-cyber-cyan font-bold' },
+          { text: '  1. helm      - Tactical K8s Helm & Core Control Plane', color: 'text-slate-300' },
+          { text: '  2. monogram  - Isometric SB Matrix & Active Cluster Nodes', color: 'text-slate-300' },
+          { text: '  3. shield    - Hardened SRE & Security Topology Shield', color: 'text-slate-300' },
+          { text: '  4. pipeline  - Continuous GitOps Delivery Hex-Fabric', color: 'text-slate-300' },
+          { text: 'Usage: logo <helm|monogram|shield|pipeline>', color: 'text-cyber-muted' },
+        ];
+      } else if (valid.includes(chosen)) {
+        localStorage.setItem('portfolio-logo-template', chosen);
+        window.dispatchEvent(new Event('logo-template-changed'));
+        sound.playDeploySuccess();
+        responseEntries = [
+          { text: `[OK] Active Logo Insignia switched to: ${chosen.toUpperCase()}`, color: 'text-cyber-emerald font-bold' }
+        ];
+      } else {
+        responseEntries = [
+          { text: `Error: Unknown logo "${chosen}". Choose: ${valid.join(', ')}`, color: 'text-red-400' }
+        ];
+      }
     } else if (lower.startsWith('theme')) {
       const parts = lower.split(/\s+/);
       const chosen = parts[1];
@@ -275,7 +303,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         <div className="bg-cyber-surface/90 px-4 py-1.5 border-t border-cyber-border/70 flex flex-wrap items-center justify-between text-[10px] text-cyber-muted">
           <div className="flex items-center gap-2">
             <span>QUICK:</span>
-            {['help', 'bio', 'skills', 'pipeline run', 'theme amber', 'theme cyber'].map((c) => (
+            {['help', 'bio', 'skills', 'pipeline run', 'logo helm', 'logo shield', 'theme amber'].map((c) => (
               <button
                 key={c}
                 onClick={() => executeCommand(c)}
