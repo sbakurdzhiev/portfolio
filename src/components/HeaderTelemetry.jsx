@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Volume2, VolumeX, Monitor, ExternalLink } from 'lucide-react';
+import { Terminal, Volume2, VolumeX, Monitor, ExternalLink, Github, Linkedin } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
 export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, setCrtEnabled, onOpenCli }) => {
@@ -125,6 +126,29 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
             <span>TRANSMIT</span>
             <ExternalLink className="w-3 h-3" />
           </a>
+
+          {/* Mobile-only Social Logos (GitHub & LinkedIn) without text */}
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+            <a
+              href={profileData.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub Profile"
+              className="p-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-white transition-colors cursor-pointer flex items-center justify-center"
+            >
+              <Github className="w-3.5 h-3.5" />
+            </a>
+
+            <a
+              href={profileData.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="LinkedIn Profile"
+              className="p-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-[#0a66c2] text-[#0a66c2] transition-colors cursor-pointer flex items-center justify-center"
+            >
+              <Linkedin className="w-3.5 h-3.5 fill-[#0a66c2]" />
+            </a>
+          </div>
         </div>
       </div>
     </header>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { 
   Terminal, ShieldCheck, Server, GitBranch, 
-  MapPin, Users, Layers, ExternalLink, Play, Github, Linkedin
+  MapPin, Users, Layers, ExternalLink, Play, Github, Linkedin,
+  BookOpen, Calendar, Clock, ArrowRight, Sparkles
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { TypewriterText } from './TypewriterText';
 import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
+import { getAllArticles } from '../utils/markdownParser';
 
 // Mini 4-line column-aligned ASCII art for STEFAN (28 cols, centered)
 const ASCII_MINI = [
@@ -18,6 +20,19 @@ const ASCII_MINI = [
 
 export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
   const [viewMode, setViewMode] = useState('human'); // 'human' | 'yaml'
+  const articles = getAllArticles();
+  const latestArticle = articles.length > 0 ? articles[0] : null;
+
+  const handleReadLatestArticle = () => {
+    sound.playBeep(650, 0.05);
+    if (latestArticle) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('tab', 'blog');
+      newUrl.searchParams.set('post', latestArticle.id || latestArticle.slug);
+      window.history.pushState({}, '', newUrl.toString());
+    }
+    onNavigateTab('blog');
+  };
 
   return (
     <div className="space-y-6">
@@ -106,7 +121,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
                 href={profileData.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="hidden md:flex px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Github className="w-3.5 h-3.5 text-white" />
                 <span>GitHub</span>
@@ -116,7 +131,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
                 href={profileData.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="hidden md:flex px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Linkedin className="w-3.5 h-3.5 text-blue-400" />
                 <span className="text-cyber-cyan">LinkedIn</span>
@@ -273,6 +288,95 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
           </pre>
         )}
       </div>
+
+      {/* Latest Technical Field Log Preview Section (On Both Desktop and Mobile) */}
+      {latestArticle && (
+        <div className="border border-cyber-border bg-cyber-surface rounded-lg p-5 sm:p-6 font-mono relative overflow-hidden corner-bracket space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border pb-3">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-cyan opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyber-cyan"></span>
+              </span>
+              <BookOpen className="w-4 h-4 text-cyber-cyan" />
+              <span className="text-xs sm:text-sm font-bold text-white tracking-wider">
+                LATEST TECHNICAL DISPATCH // FIELD LOG
+              </span>
+              <span className="px-1.5 py-0.2 rounded bg-cyber-emerald/10 border border-cyber-emerald/40 text-cyber-emerald text-[9px] font-bold">
+                NEW
+              </span>
+            </div>
+
+            <button
+              onClick={() => {
+                sound.playBeep(520, 0.04);
+                onNavigateTab('blog');
+              }}
+              className="text-xs text-cyber-cyan hover:text-white flex items-center gap-1 transition-colors cursor-pointer self-start sm:self-auto font-semibold"
+            >
+              <span>EXPLORE ALL {articles.length} DISPATCHES</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Article Brief Card */}
+          <div 
+            onClick={handleReadLatestArticle}
+            className="p-4 sm:p-5 rounded-lg bg-cyber-bg border border-cyber-border hover:border-cyber-cyan/70 transition-all duration-200 group cursor-pointer space-y-3 hover:shadow-glow-subtle"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-cyber-panel border border-cyber-cyan/40 text-cyber-cyan text-[10px] font-bold">
+                  {latestArticle.category}
+                </span>
+                <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-slate-500" />
+                  {latestArticle.date}
+                </span>
+              </div>
+              <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                <Clock className="w-3 h-3 text-cyber-emerald" />
+                {latestArticle.readTime}
+              </span>
+            </div>
+
+            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-cyber-cyan transition-colors leading-snug">
+              {latestArticle.title}
+            </h3>
+
+            <p className="text-xs text-slate-300 leading-relaxed line-clamp-2 sm:line-clamp-3">
+              {latestArticle.summary}
+            </p>
+
+            {/* Highlights preview */}
+            {latestArticle.highlights && latestArticle.highlights.length > 0 && (
+              <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                {latestArticle.highlights.slice(0, 2).map((item, hIdx) => (
+                  <div key={hIdx} className="flex items-start gap-1.5 text-slate-400 bg-cyber-surface/60 p-1.5 rounded border border-cyber-border/40">
+                    <span className="text-cyber-emerald font-bold">✓</span>
+                    <span className="text-[11px] truncate">{item}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-cyber-border/40 text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {latestArticle.tags?.slice(0, 4).map((t, idx) => (
+                  <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-cyber-surface border border-cyber-border/60 text-slate-400">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+
+              <span className="text-cyber-cyan text-xs font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>READ ARTICLE</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Telemetry Panels Moved to the End, Right Above Footer */}
       <div className="space-y-3 pt-2">

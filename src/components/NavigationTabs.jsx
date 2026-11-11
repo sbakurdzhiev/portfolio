@@ -20,9 +20,11 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
     { id: 'blog', label: 'BLOG POSTS', shortLabel: 'BLOG', num: '7', icon: BookOpen },
   ];
 
-  // Mobile primary tabs
-  const mobilePrimaryIds = ['overview', 'career', 'projects'];
-  const mobilePrimaryTabs = allTabs.filter(t => mobilePrimaryIds.includes(t.id));
+  // Mobile primary tabs: Overview -> Career -> Work -> Blog (User requested Blog after Work)
+  const mobilePrimaryIds = ['overview', 'career', 'projects', 'blog'];
+  const mobilePrimaryTabs = mobilePrimaryIds
+    .map(id => allTabs.find(t => t.id === id))
+    .filter(Boolean);
   const mobileNestedTabs = allTabs.filter(t => !mobilePrimaryIds.includes(t.id));
 
   const isNestedActive = mobileNestedTabs.some(t => t.id === activeTab);
