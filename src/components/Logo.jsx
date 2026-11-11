@@ -36,7 +36,7 @@ export const LOGO_TEMPLATES = [
 ];
 
 export const Logo = ({ size = 42, className = '', templateId = null, showGlow = true }) => {
-  const [activeTemplate, setActiveTemplate] = useState('cyberhex');
+  const [activeTemplate, setActiveTemplate] = useState('prompt');
 
   useEffect(() => {
     if (templateId) {
@@ -44,7 +44,7 @@ export const Logo = ({ size = 42, className = '', templateId = null, showGlow = 
       return;
     }
 
-    const saved = localStorage.getItem('portfolio-logo-template') || 'cyberhex';
+    const saved = localStorage.getItem('portfolio-logo-template') || 'prompt';
     setActiveTemplate(saved);
 
     const handleStorage = () => {

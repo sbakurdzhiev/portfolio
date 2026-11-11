@@ -4,10 +4,10 @@ import { LOGO_TEMPLATES } from './Logo';
 import { sound } from '../utils/audio';
 
 export const LogoShowcaseModal = ({ isOpen, onClose }) => {
-  const [currentId, setCurrentId] = useState('cyberhex');
+  const [currentId, setCurrentId] = useState('prompt');
 
   useEffect(() => {
-    const saved = localStorage.getItem('portfolio-logo-template') || 'cyberhex';
+    const saved = localStorage.getItem('portfolio-logo-template') || 'prompt';
     setCurrentId(saved);
   }, [isOpen]);
 

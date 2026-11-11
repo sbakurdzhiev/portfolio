@@ -1,31 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="s-grad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#00d4ff" />
       <stop offset="100%" stop-color="#00ff9d" />
     </linearGradient>
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#101a2b" />
-      <stop offset="100%" stop-color="#05080f" />
+    <linearGradient id="b-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff9d" />
+      <stop offset="100%" stop-color="#00d4ff" />
     </linearGradient>
   </defs>
 
-  <!-- Hexagon Frame -->
-  <polygon points="50,5 92,28 92,72 50,95 8,72 8,28" fill="url(#bg-grad)" stroke="#1b2d4b" stroke-width="4" />
-  <polygon points="50,9 88,30 88,70 50,91 12,70 12,30" fill="none" stroke="url(#logo-grad)" stroke-width="1.5" stroke-dasharray="16 8" opacity="0.8" />
+  <!-- Dark Panel Base with Tactical Chamfered Corners -->
+  <rect x="8" y="8" width="84" height="84" rx="20" fill="#101a2b" stroke="#1b2d4b" stroke-width="3" />
+  <path d="M16 8 L8 16 M84 8 L92 16 M8 84 L16 92 M92 84 L84 92" stroke="#00d4ff" stroke-width="2.5" />
 
-  <!-- Corner Brackets -->
-  <path d="M50 5 L58 9.5 M50 5 L42 9.5" stroke="#00ff9d" stroke-width="3" stroke-linecap="round" />
-  <path d="M92 28 L84 32.5 M92 28 L92 37" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" />
-  <path d="M92 72 L84 67.5 M92 72 L92 63" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" />
-  <path d="M50 95 L58 90.5 M50 95 L42 90.5" stroke="#00ff9d" stroke-width="3" stroke-linecap="round" />
-  <path d="M8 72 L16 67.5 M8 72 L8 63" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" />
-  <path d="M8 28 L16 32.5 M8 28 L8 37" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" />
+  <!-- Letter S - Terminal Chevron Flow -->
+  <path d="M44 26 L22 26 C17 26 15 30 15 35 C15 41 18 45 25 47 L35 50 C42 52 46 56 46 62 C46 69 41 74 34 74 L14 74" stroke="url(#s-grad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M22 36 L27 40 L22 44" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M33 56 L38 60 L33 64" stroke="#00ff9d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 
-  <!-- Monogram S-B Glyph -->
-  <path d="M32 35 L48 24 L64 35 L50 48 L32 48" fill="none" stroke="url(#logo-grad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M32 48 L60 48 C67 48 72 53 72 60 C72 67 67 72 60 72 L32 72 Z" fill="none" stroke="url(#logo-grad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-  <line x1="32" y1="24" x2="32" y2="76" stroke="#00d4ff" stroke-width="4.5" stroke-linecap="round" />
+  <!-- Letter B - Spine & Dual Container Pod Blocks -->
+  <line x1="55" y1="23" x2="55" y2="77" stroke="url(#b-grad)" stroke-width="6.5" stroke-linecap="round" />
+  <path d="M55 26 L70 26 C77 26 83 30 83 37 C83 44 77 49 70 49 L55 49" stroke="url(#b-grad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M55 49 L72 49 C79 49 85 54 85 62 C85 70 79 74 72 74 L55 74" stroke="url(#b-grad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 
-  <circle cx="50" cy="48" r="3.5" fill="#00ff9d" />
+  <!-- Terminal Cursors -->
+  <rect x="63" y="34" width="4.5" height="6.5" rx="1" fill="#00d4ff" />
+  <rect x="63" y="58" width="4.5" height="6.5" rx="1" fill="#00ff9d" />
 </svg>
