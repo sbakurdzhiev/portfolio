@@ -6,7 +6,7 @@
 * **Typewriter (`src/components/TypewriterText.jsx`)**: Animated typing cadence for roles and motto.
 * **App Root (`src/App.jsx`)**: Manages navigation tabs, audio toggle state, CRT scanlines toggle, global keybindings (number keys `1-6` for tabs, backtick `` ` `` for CLI).
 * **Telemetry Ribbon (`src/components/HeaderTelemetry.jsx`)**: Displays cluster heartbeat (`k8s-master-sofia-01 [READY]`), live ping (14ms jitter), UTC clock, and quick toggles.
-* **Overview Section (`src/components/OverviewSection.jsx`)**: Hero ASCII banner, status chips, quick action buttons, metric dials, and dual human/YAML profile view.
+* **Overview Section (`src/components/OverviewSection.jsx`)**: Hero ASCII banner with 4 centered methods (`SLANT`, `ANSI`, `BLOCK`, `MINI`), status chips, quick action buttons, metric dials, and dual human/YAML profile view.
 * **Telemetry Section (`src/components/TelemetrySection.jsx`)**: Htop-style live resource bars for CPU/RAM/Net, skills breakdown with progress bars, and active Kubernetes operators map.
 * **Live Pipeline Simulator (`src/components/PipelineSimulator.jsx`)**: Interactive CI/CD runner executing SonarQube, Trivy, Podman, Kube-bench, and ArgoCD rollout to OpenShift production with animated logs and pod rollout status table.
 * **Architecture Showcase (`src/components/ProjectsSection.jsx`)**: Custom Resource Definitions with YAML manifest inspector and direct GitHub links.
