@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal as TerminalIcon, X, Maximize2, Minimize2, CornerDownLeft, Sparkles } from 'lucide-react';
+import { Terminal as TerminalIcon, X, Maximize2, Minimize2 } from 'lucide-react';
 import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
 const AVAILABLE_COMMANDS = [
   'help', 'bio', 'skills', 'projects', 'pipeline run', 
   'kubectl get nodes', 'kubectl get pods', 'kubectl get crds',
+  'theme', 'theme cyber', 'theme amber', 'theme tokyonight', 'theme matrix',
   'contact', 'whoami', 'clear', 'sudo rm -rf /', 'matrix', 'exit'
 ];
 
@@ -14,8 +15,8 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
   const [history, setHistory] = useState([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [outputLines, setOutputLines] = useState([
-    { text: '☸️  Welcome to Stefan Bakurdzhiev Kubernetes & OpenShift Interactive Shell [v4.14-k8s]', color: 'text-cyber-cyan font-bold' },
-    { text: 'Type "help" to view available tactical commands or press Tab for autocompletion.', color: 'text-slate-400' },
+    { text: '☸️  Stefan Bakurdzhiev Tactical Kubernetes & OpenShift Interactive Shell [v4.14-k8s]', color: 'text-cyber-cyan font-bold' },
+    { text: 'Type "help" to view tactical commands or "theme [cyber|amber|tokyonight|matrix]" to switch visual palettes.', color: 'text-slate-400' },
     { text: '----------------------------------------------------------------------------------', color: 'text-cyber-border' },
   ]);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -71,12 +72,10 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
       return;
     }
 
-    // Add to history
     setHistory(prev => [...prev, cmd]);
     setHistoryIdx(-1);
     setInput('');
 
-    // Append prompt line
     const promptEntry = { text: `${profileData.terminalPrompt} ${cmd}`, color: 'text-white font-bold' };
     const lower = cmd.toLowerCase();
 
@@ -96,6 +95,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  skills          - Inspect container, cloud, and SRE proficiency', color: 'text-slate-300' },
         { text: '  projects        - List open-source architectures & handbooks', color: 'text-slate-300' },
         { text: '  pipeline run    - Execute live automated GitOps CI/CD runner', color: 'text-cyber-emerald font-bold' },
+        { text: '  theme [name]    - Switch palette: cyber, amber, tokyonight, matrix', color: 'text-cyber-cyan' },
         { text: '  kubectl get nodes - List cluster node status and versions', color: 'text-slate-300' },
         { text: '  kubectl get pods  - List running microservice pods in production', color: 'text-slate-300' },
         { text: '  kubectl get crds  - View active Custom Resource Definitions', color: 'text-slate-300' },
@@ -103,6 +103,32 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  clear           - Wipe the terminal buffer', color: 'text-slate-300' },
         { text: '  sudo rm -rf /   - Root access attempt (warning: sandbox)', color: 'text-red-400' },
       ];
+    } else if (lower.startsWith('theme')) {
+      const parts = lower.split(/\s+/);
+      const chosen = parts[1];
+      const valid = ['cyber', 'amber', 'tokyonight', 'matrix'];
+
+      if (!chosen) {
+        responseEntries = [
+          { text: 'CURRENT THEMES AVAILABLE:', color: 'text-cyber-cyan font-bold' },
+          { text: '  • cyber      - Tactical Slate, Cyan & Emerald HUD', color: 'text-slate-300' },
+          { text: '  • amber      - Vintage Phosphor CRT Monochrome', color: 'text-amber-400' },
+          { text: '  • tokyonight - Modern Neovim / Storm Terminal', color: 'text-blue-300' },
+          { text: '  • matrix     - Authentic Phosphor Matrix Green', color: 'text-emerald-400' },
+          { text: 'Usage: theme <name> (e.g. "theme amber")', color: 'text-cyber-muted' },
+        ];
+      } else if (valid.includes(chosen)) {
+        document.documentElement.setAttribute('data-theme', chosen);
+        localStorage.setItem('portfolio-theme', chosen);
+        sound.playBeep(750, 0.08);
+        responseEntries = [
+          { text: `[OK] Theme switched to: ${chosen.toUpperCase()}`, color: 'text-cyber-emerald font-bold' }
+        ];
+      } else {
+        responseEntries = [
+          { text: `Error: Unknown theme "${chosen}". Valid options: ${valid.join(', ')}`, color: 'text-red-400' }
+        ];
+      }
     } else if (lower === 'bio' || lower === 'about') {
       responseEntries = [
         { text: `NAME: ${profileData.name} (Senior DevOps & Platform Engineer)`, color: 'text-cyber-cyan font-bold' },
@@ -186,7 +212,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         ? 'inset-0'
         : 'bottom-0 left-0 right-0 sm:bottom-4 sm:right-4 sm:left-auto sm:w-[650px] sm:max-w-[calc(100vw-2rem)] h-[480px]'
     }`}>
-      <div className="h-full flex flex-col bg-[#05080f] border-2 border-cyber-cyan/60 rounded-t-lg sm:rounded-lg overflow-hidden shadow-glow-cyan">
+      <div className="h-full flex flex-col bg-cyber-bg border-2 border-cyber-cyan rounded-t-lg sm:rounded-lg overflow-hidden shadow-glow-cyan">
         {/* Terminal Header */}
         <div className="bg-cyber-surface px-4 py-2.5 border-b border-cyber-border flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
@@ -249,7 +275,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         <div className="bg-cyber-surface/90 px-4 py-1.5 border-t border-cyber-border/70 flex flex-wrap items-center justify-between text-[10px] text-cyber-muted">
           <div className="flex items-center gap-2">
             <span>QUICK:</span>
-            {['help', 'bio', 'skills', 'pipeline run'].map((c) => (
+            {['help', 'bio', 'skills', 'pipeline run', 'theme amber', 'theme cyber'].map((c) => (
               <button
                 key={c}
                 onClick={() => executeCommand(c)}

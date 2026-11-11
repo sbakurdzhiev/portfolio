@@ -2,8 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Theme Variable Palettes */
+:root, [data-theme="cyber"] {
   color-scheme: dark;
+  --cyber-bg: #05080f;
+  --cyber-surface: #0b121e;
+  --cyber-panel: #101a2b;
+  --cyber-border: #1b2d4b;
+  --cyber-border-bright: #2a4570;
+  --cyber-text: #cbd5e1;
+  --cyber-muted: #64748b;
+  --cyber-emerald: #00ff9d;
+  --cyber-emerald-glow: rgba(0, 255, 157, 0.2);
+  --cyber-cyan: #00d4ff;
+  --cyber-cyan-glow: rgba(0, 212, 255, 0.2);
+  --cyber-amber: #fbbf24;
+  --cyber-crimson: #ef4444;
+  --cyber-grid: rgba(27, 45, 75, 0.25);
+  --scanline-opacity: 0.55;
+}
+
+[data-theme="amber"] {
+  color-scheme: dark;
+  --cyber-bg: #120d04;
+  --cyber-surface: #1c1407;
+  --cyber-panel: #291e0a;
+  --cyber-border: #4a3614;
+  --cyber-border-bright: #73541f;
+  --cyber-text: #fde68a;
+  --cyber-muted: #927238;
+  --cyber-emerald: #fbbf24;
+  --cyber-emerald-glow: rgba(251, 191, 36, 0.25);
+  --cyber-cyan: #ffb000;
+  --cyber-cyan-glow: rgba(255, 176, 0, 0.25);
+  --cyber-amber: #f59e0b;
+  --cyber-crimson: #ea580c;
+  --cyber-grid: rgba(74, 54, 20, 0.3);
+  --scanline-opacity: 0.7;
+}
+
+[data-theme="tokyonight"] {
+  color-scheme: dark;
+  --cyber-bg: #16161e;
+  --cyber-surface: #1a1b26;
+  --cyber-panel: #24283b;
+  --cyber-border: #343b58;
+  --cyber-border-bright: #414868;
+  --cyber-text: #c0caf5;
+  --cyber-muted: #6b7396;
+  --cyber-emerald: #73daca;
+  --cyber-emerald-glow: rgba(115, 218, 202, 0.25);
+  --cyber-cyan: #7dcfff;
+  --cyber-cyan-glow: rgba(125, 207, 255, 0.25);
+  --cyber-amber: #e0af68;
+  --cyber-crimson: #f7768e;
+  --cyber-grid: rgba(52, 59, 88, 0.3);
+  --scanline-opacity: 0.45;
+}
+
+[data-theme="matrix"] {
+  color-scheme: dark;
+  --cyber-bg: #030804;
+  --cyber-surface: #061509;
+  --cyber-panel: #0d2412;
+  --cyber-border: #173d1f;
+  --cyber-border-bright: #235c2f;
+  --cyber-text: #bbf7d0;
+  --cyber-muted: #4e8057;
+  --cyber-emerald: #00ff41;
+  --cyber-emerald-glow: rgba(0, 255, 65, 0.25);
+  --cyber-cyan: #39ff14;
+  --cyber-cyan-glow: rgba(57, 255, 20, 0.25);
+  --cyber-amber: #a3e635;
+  --cyber-crimson: #ef4444;
+  --cyber-grid: rgba(23, 61, 31, 0.35);
+  --scanline-opacity: 0.65;
 }
 
 /* Custom Tactical Scrollbar */
@@ -12,21 +85,21 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #05080f;
+  background: var(--cyber-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1b2d4b;
+  background: var(--cyber-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00d4ff;
+  background: var(--cyber-cyan);
 }
 
-/* Tactical Grid Pattern */
+/* Tactical Grid Pattern using CSS variable */
 .bg-tactical-grid {
   background-image: 
-    linear-gradient(to right, rgba(27, 45, 75, 0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(27, 45, 75, 0.25) 1px, transparent 1px);
+    linear-gradient(to right, var(--cyber-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cyber-grid) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
@@ -39,28 +112,28 @@
   display: block;
   position: fixed;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
   background-size: 100% 4px;
   z-index: 40;
   pointer-events: none;
-  opacity: 0.6;
+  opacity: var(--scanline-opacity, 0.6);
 }
 
 /* Phosphor Glow Utilities */
 .text-glow-cyan {
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.65), 0 0 20px rgba(0, 212, 255, 0.35);
+  text-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px var(--cyber-cyan-glow);
 }
 
 .text-glow-emerald {
-  text-shadow: 0 0 10px rgba(0, 255, 157, 0.65), 0 0 20px rgba(0, 255, 157, 0.35);
+  text-shadow: 0 0 10px var(--cyber-emerald), 0 0 20px var(--cyber-emerald-glow);
 }
 
 .box-glow-cyan {
-  box-shadow: 0 0 20px -3px rgba(0, 212, 255, 0.25), inset 0 0 15px -3px rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 20px -3px var(--cyber-cyan-glow), inset 0 0 15px -3px var(--cyber-cyan-glow);
 }
 
 .box-glow-emerald {
-  box-shadow: 0 0 20px -3px rgba(0, 255, 157, 0.25), inset 0 0 15px -3px rgba(0, 255, 157, 0.1);
+  box-shadow: 0 0 20px -3px var(--cyber-emerald-glow), inset 0 0 15px -3px var(--cyber-emerald-glow);
 }
 
 /* Tactical Corner Accent Brackets */
@@ -74,8 +147,8 @@
   left: -1px;
   width: 8px;
   height: 8px;
-  border-top: 2px solid #00d4ff;
-  border-left: 2px solid #00d4ff;
+  border-top: 2px solid var(--cyber-cyan);
+  border-left: 2px solid var(--cyber-cyan);
   pointer-events: none;
 }
 .corner-bracket::after {
@@ -85,7 +158,7 @@
   right: -1px;
   width: 8px;
   height: 8px;
-  border-bottom: 2px solid #00d4ff;
-  border-right: 2px solid #00d4ff;
+  border-bottom: 2px solid var(--cyber-cyan);
+  border-right: 2px solid var(--cyber-cyan);
   pointer-events: none;
 }

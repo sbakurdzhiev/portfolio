@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  Terminal, ShieldCheck, Server, GitBranch, ArrowRight, 
-  MapPin, Mail, Linkedin, Github, Globe, CheckCircle2, 
-  Cpu, Users, Layers, ExternalLink, Play, Sparkles
+  Terminal, ShieldCheck, Server, GitBranch, 
+  MapPin, Users, Layers, ExternalLink, Play
 } from 'lucide-react';
+import { Logo } from './Logo';
+import { TypewriterText } from './TypewriterText';
 import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
@@ -24,8 +25,8 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
       {/* Hero Tactical HUD Banner */}
       <div className="border border-cyber-border bg-cyber-surface rounded-lg p-5 sm:p-7 relative overflow-hidden corner-bracket">
         {/* Subtle grid background glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyber-cyan/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyber-emerald/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyber-cyan-glow rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyber-emerald-glow rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row gap-6 justify-between items-start">
           <div className="space-y-4 max-w-3xl">
@@ -37,19 +38,22 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
               <span className="text-slate-300">OPEN TO REMOTE WORLDWIDE</span>
             </div>
 
-            {/* Title / Headline */}
-            <div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-3">
-                {profileData.name}
-                <span className="text-sm font-normal text-cyber-emerald hidden sm:inline">
-                  [k8s-master]
-                </span>
-              </h2>
-              <p className="text-lg sm:text-xl text-cyber-cyan font-mono mt-1 font-semibold flex items-center gap-2">
-                <span>{profileData.title}</span>
-                <span className="text-slate-500 font-normal">|</span>
-                <span className="text-slate-300 text-sm font-normal">{profileData.subtitle}</span>
-              </p>
+            {/* Title / Headline with Logo & Typewriter */}
+            <div className="flex items-start gap-4">
+              <div className="hidden sm:block pt-1">
+                <Logo size={64} />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-3">
+                  {profileData.name}
+                  <span className="text-sm font-normal text-cyber-emerald hidden sm:inline">
+                    [k8s-master]
+                  </span>
+                </h2>
+                <div className="text-base sm:text-xl text-cyber-cyan font-mono mt-1 font-semibold min-h-[30px] flex items-center">
+                  <TypewriterText />
+                </div>
+              </div>
             </div>
 
             {/* Philosophy quote */}
@@ -103,8 +107,8 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
                 rel="noreferrer"
                 className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border text-slate-300 hover:text-white hover:border-slate-500 font-mono text-xs flex items-center gap-1.5 transition-all"
               >
-                <Github className="w-3.5 h-3.5" />
                 <span>GitHub</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
 
               <a
@@ -113,8 +117,8 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
                 rel="noreferrer"
                 className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border text-slate-300 hover:text-white hover:border-slate-500 font-mono text-xs flex items-center gap-1.5 transition-all"
               >
-                <Linkedin className="w-3.5 h-3.5 text-blue-400" />
-                <span>LinkedIn</span>
+                <span className="text-cyber-cyan">LinkedIn</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
             </div>
           </div>
@@ -166,11 +170,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
           >
             <div className="flex items-center justify-between text-[10px] text-cyber-muted mb-1">
               <span>{metric.label}</span>
-              <span className={`text-[9px] px-1 rounded ${
-                metric.status === 'NOMINAL' || metric.status === 'HEALTHY' || metric.status === 'OPTIMAL'
-                  ? 'bg-emerald-500/10 text-emerald-400'
-                  : 'bg-cyan-500/10 text-cyan-400'
-              }`}>
+              <span className="text-[9px] px-1 rounded bg-cyber-bg border border-cyber-border text-cyber-cyan">
                 {metric.status}
               </span>
             </div>

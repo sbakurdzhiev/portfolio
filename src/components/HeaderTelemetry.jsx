@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Volume2, VolumeX, Monitor, Shield, Radio, Server, Activity, Download, ExternalLink } from 'lucide-react';
+import { Terminal, Volume2, VolumeX, Monitor, Server, Activity, ExternalLink } from 'lucide-react';
+import { Logo } from './Logo';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { sound } from '../utils/audio';
 
 export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, setCrtEnabled, onOpenCli }) => {
@@ -14,7 +16,6 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
     updateClock();
     const interval = setInterval(updateClock, 1000);
 
-    // Random slight jitter in ping to feel authentic
     const pingInterval = setInterval(() => {
       setPing(Math.floor(12 + Math.random() * 6));
     }, 4000);
@@ -65,7 +66,7 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           </span>
           <div className="flex items-center gap-1 bg-cyber-bg border border-cyber-border/80 px-2 py-0.5 rounded text-[10px] text-cyber-cyan">
             <span>UPTIME:</span>
-            <span className="text-emerald-400 font-bold">10y 5m (99.99%)</span>
+            <span className="text-cyber-emerald font-bold">10y 5m (99.99%)</span>
           </div>
         </div>
       </div>
@@ -73,9 +74,7 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
       {/* Main branding & quick controls */}
       <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-gradient-to-br from-cyber-panel to-cyber-bg border border-cyber-cyan/40 flex items-center justify-center text-cyber-cyan shadow-glow-subtle font-black text-lg">
-            ☸
-          </div>
+          <Logo size={42} />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-bold text-white tracking-wider flex items-center gap-2">
@@ -92,8 +91,12 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           </div>
         </div>
 
-        {/* Toggles & CLI Button */}
-        <div className="flex items-center gap-2 sm:gap-3 text-xs">
+        {/* Toggles, Theme Switcher & CLI Button */}
+        <div className="flex items-center gap-2 sm:gap-2.5 text-xs">
+          {/* Theme Selector */}
+          <ThemeSwitcher />
+
+          {/* Sound FX */}
           <button
             onClick={handleSoundToggle}
             title={soundEnabled ? "Mute Synthesized Audio FX" : "Enable Retro Audio FX"}
@@ -107,6 +110,7 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
             <span className="hidden sm:inline text-[11px]">SFX: {soundEnabled ? 'ON' : 'MUTED'}</span>
           </button>
 
+          {/* CRT Scanlines */}
           <button
             onClick={handleCrtToggle}
             title={crtEnabled ? "Disable CRT Scanlines" : "Enable CRT Scanlines"}
@@ -120,15 +124,17 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
             <span className="hidden sm:inline text-[11px]">CRT: {crtEnabled ? 'ON' : 'OFF'}</span>
           </button>
 
+          {/* Launch CLI */}
           <button
             onClick={onOpenCli}
             className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-cyan/60 text-cyber-cyan hover:bg-cyber-cyan hover:text-black font-semibold transition-all flex items-center gap-1.5 shadow-glow-subtle group"
           >
             <Terminal className="w-3.5 h-3.5 text-cyber-cyan group-hover:text-black" />
-            <span className="text-[11px]">LAUNCH CLI</span>
+            <span className="text-[11px]">CLI</span>
             <kbd className="hidden md:inline text-[9px] bg-cyber-bg text-cyber-muted group-hover:text-black px-1 rounded border border-cyber-border">`</kbd>
           </button>
 
+          {/* Transmit */}
           <a
             href="mailto:stefan.bakurdzhiev@gmail.com"
             className="hidden sm:flex px-3 py-1.5 rounded bg-cyber-emerald/10 border border-cyber-emerald/40 text-cyber-emerald hover:bg-cyber-emerald hover:text-black font-semibold transition-all items-center gap-1 text-[11px]"
