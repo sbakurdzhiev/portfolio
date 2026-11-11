@@ -1,34 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Cpu, GitBranch, Layers, FileCode, Terminal, ChevronDown } from 'lucide-react';
+import { 
+  LayoutDashboard, FileCode, Layers, Cpu, GitBranch, 
+  Terminal, BookOpen, ChevronDown 
+} from 'lucide-react';
 import { sound } from '../utils/audio';
 
 export const NavigationTabs = ({ activeTab, setActiveTab }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Exact requested order:
+  // 1. Overview 2. Career Logs 3. Work & Projects 4. Stack & Telemetry 5. CI/CD Runner 6. Interactive CLI; 7. Blog Posts
   const allTabs = [
     { id: 'overview', label: 'OVERVIEW', shortLabel: 'OVERVIEW', num: '1', icon: LayoutDashboard },
-    { id: 'telemetry', label: 'TELEMETRY & STACK', shortLabel: 'TELEMETRY', num: '2', icon: Cpu },
-    { id: 'pipeline', label: 'CI/CD RUNNER', shortLabel: 'CI/CD', num: '3', icon: GitBranch, badge: 'LIVE' },
-    { id: 'projects', label: 'ARCHITECTURE & WORK', shortLabel: 'WORK', num: '4', icon: Layers },
-    { id: 'career', label: 'CAREER LOGS', shortLabel: 'CAREER', num: '5', icon: FileCode },
+    { id: 'career', label: 'CAREER LOGS', shortLabel: 'CAREER', num: '2', icon: FileCode },
+    { id: 'projects', label: 'WORK & PROJECTS', shortLabel: 'WORK', num: '3', icon: Layers },
+    { id: 'telemetry', label: 'STACK & TELEMETRY', shortLabel: 'STACK', num: '4', icon: Cpu },
+    { id: 'pipeline', label: 'CI/CD RUNNER', shortLabel: 'CI/CD', num: '5', icon: GitBranch, badge: 'LIVE' },
     { id: 'terminal', label: 'INTERACTIVE CLI', shortLabel: 'CLI', num: '6', icon: Terminal },
+    { id: 'blog', label: 'BLOG POSTS', shortLabel: 'BLOG', num: '7', icon: BookOpen },
   ];
 
   // Mobile primary tabs
-  const mobilePrimaryIds = ['overview', 'projects', 'career'];
+  const mobilePrimaryIds = ['overview', 'career', 'projects'];
   const mobilePrimaryTabs = allTabs.filter(t => mobilePrimaryIds.includes(t.id));
   const mobileNestedTabs = allTabs.filter(t => !mobilePrimaryIds.includes(t.id));
 
   const isNestedActive = mobileNestedTabs.some(t => t.id === activeTab);
   const activeNestedTab = mobileNestedTabs.find(t => t.id === activeTab);
 
+  // Keyboard shortcut listener (1-7) without visible hints
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
 
       const num = parseInt(e.key, 10);
       if (num >= 1 && num <= allTabs.length) {
-        sound.playBeep(520 + num * 40, 0.04);
+        sound.playBeep(520 + num * 35, 0.04);
         setActiveTab(allTabs[num - 1].id);
       }
     };
@@ -43,10 +50,10 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
   };
 
   return (
-    <nav className="border-b border-cyber-border bg-cyber-surface/60 px-3 sm:px-4 py-2 select-none">
+    <nav className="border-b border-cyber-border bg-cyber-surface/60 px-3 sm:px-4 py-1.5 select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-        {/* DESKTOP VIEW (md and up): All 6 tabs visible */}
-        <div className="hidden md:flex items-center gap-1.5 lg:gap-2 flex-wrap">
+        {/* DESKTOP VIEW (md and up): All 7 tabs on 1 clean line without shortcut hints */}
+        <div className="hidden md:flex items-center gap-1 lg:gap-1.5 w-full justify-between flex-nowrap overflow-x-auto no-scrollbar">
           {allTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -54,19 +61,18 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-mono font-medium transition-all whitespace-nowrap relative cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-2 rounded text-xs font-mono font-medium transition-all whitespace-nowrap relative cursor-pointer ${
                   isActive
                     ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 shadow-glow-subtle'
                     : 'text-cyber-muted hover:text-slate-200 hover:bg-cyber-panel/40 border border-transparent'
                 }`}
               >
-                <span className="text-[10px] text-cyber-muted/80 opacity-70">[{tab.num}]</span>
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyber-cyan' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyber-cyan' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span className="relative flex h-2 w-2 ml-1">
+                  <span className="relative flex h-1.5 w-1.5 ml-0.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-emerald opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyber-emerald"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyber-emerald"></span>
                   </span>
                 )}
                 {isActive && (
@@ -77,7 +83,7 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
           })}
         </div>
 
-        {/* MOBILE VIEW (< md): Only Overview, Architecture & Work, Career Logs + Nested Dropdown */}
+        {/* MOBILE VIEW (< md): Primary tabs + Nested Dropdown */}
         <div className="flex md:hidden items-center justify-between w-full gap-1">
           <div className="flex items-center gap-1 flex-1 overflow-x-auto no-scrollbar">
             {mobilePrimaryTabs.map((tab) => {
@@ -100,7 +106,7 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
             })}
           </div>
 
-          {/* Nested Dropdown for Mobile (Telemetry, CI/CD, CLI) */}
+          {/* Nested Dropdown for Mobile (Stack, CI/CD, CLI, Blog) */}
           <div className="relative shrink-0">
             <button
               onClick={() => setDropdownOpen(prev => !prev)}
@@ -138,7 +144,6 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
                         }`}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-cyber-muted">[{tab.num}]</span>
                           <Icon className="w-3.5 h-3.5" />
                           <span>{tab.label}</span>
                         </div>
@@ -154,13 +159,6 @@ export const NavigationTabs = ({ activeTab, setActiveTab }) => {
               </>
             )}
           </div>
-        </div>
-
-        {/* Desktop Keyboard Shortcut Indicator */}
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-cyber-muted font-mono pl-4 shrink-0">
-          <span className="text-slate-500">SHORTCUTS:</span>
-          <kbd className="px-1.5 py-0.5 bg-cyber-panel border border-cyber-border rounded text-[10px] text-slate-300">1-6</kbd>
-          <span className="text-slate-600">to switch</span>
         </div>
       </div>
     </nav>

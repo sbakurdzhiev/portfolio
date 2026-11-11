@@ -4,7 +4,7 @@ import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
 const AVAILABLE_COMMANDS = [
-  'help', 'bio', 'skills', 'projects', 'pipeline run', 
+  'help', 'bio', 'skills', 'projects', 'pipeline run', 'blog',
   'kubectl get nodes', 'kubectl get pods', 'kubectl get crds',
   'theme', 'theme cyber', 'theme amber', 'theme tokyonight', 'theme matrix',
   'contact', 'whoami', 'clear', 'sudo rm -rf /', 'matrix', 'exit'
@@ -94,6 +94,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  bio             - View profile summary and engineering philosophy', color: 'text-slate-300' },
         { text: '  skills          - Inspect container, cloud, and SRE proficiency', color: 'text-slate-300' },
         { text: '  projects        - List open-source architectures & handbooks', color: 'text-slate-300' },
+        { text: '  blog            - View technical articles & DevOps field logs', color: 'text-cyber-cyan' },
         { text: '  pipeline run    - Execute live automated GitOps CI/CD runner', color: 'text-cyber-emerald font-bold' },
         { text: '  theme [name]    - Switch palette: cyber, amber, tokyonight, matrix', color: 'text-cyber-cyan' },
         { text: '  kubectl get nodes - List cluster node status and versions', color: 'text-slate-300' },
@@ -179,6 +180,15 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
           text: `  [${p.kind}] ${p.title} -> ${p.repo}`,
           color: 'text-slate-300'
         }))
+      ];
+    } else if (lower === 'blog' || lower === 'articles') {
+      responseEntries = [
+        { text: 'TACTICAL FIELD LOGS & TECHNICAL ARTICLES (TAB 7):', color: 'text-cyber-cyan font-bold' },
+        { text: '  1. Zero-Downtime OpenShift 4.14 In-Place Upgrades in Banking [7 min]', color: 'text-white' },
+        { text: '  2. Hardening Supply Chains: Trivy, Cosign & Kyverno in CI/CD [6 min]', color: 'text-white' },
+        { text: '  3. Multi-Cluster GitOps at Scale with ArgoCD ApplicationSets [8 min]', color: 'text-white' },
+        { text: '  4. From Ticket Hell to Platform Engineering: Leading 8 Engineers [5 min]', color: 'text-white' },
+        { text: 'Type or click tab "BLOG POSTS" to read full dispatches with architecture manifests.', color: 'text-cyber-emerald' },
       ];
     } else if (lower === 'pipeline run' || lower === 'pipeline') {
       responseEntries = [

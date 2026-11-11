@@ -7,6 +7,7 @@ import { PipelineSimulator } from './components/PipelineSimulator';
 import { ProjectsSection } from './components/ProjectsSection';
 import { CareerSection } from './components/CareerSection';
 import { TerminalCLI } from './components/TerminalCLI';
+import { BlogSection } from './components/BlogSection';
 import { FooterTelemetry } from './components/FooterTelemetry';
 import { sound } from './utils/audio';
 
@@ -81,6 +82,10 @@ export function App() {
 
           {activeTab === 'career' && (
             <CareerSection />
+          )}
+
+          {activeTab === 'blog' && (
+            <BlogSection />
           )}
 
           {activeTab === 'terminal' && (

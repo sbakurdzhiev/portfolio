@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Volume2, VolumeX, Monitor, Server, Activity, ExternalLink } from 'lucide-react';
+import { Terminal, Volume2, VolumeX, Monitor, ExternalLink } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { sound } from '../utils/audio';
 
 export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, setCrtEnabled, onOpenCli }) => {
   const [time, setTime] = useState('');
-  const [ping, setPing] = useState(14);
 
   useEffect(() => {
     const updateClock = () => {
@@ -16,13 +15,8 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
     updateClock();
     const interval = setInterval(updateClock, 1000);
 
-    const pingInterval = setInterval(() => {
-      setPing(Math.floor(12 + Math.random() * 6));
-    }, 4000);
-
     return () => {
       clearInterval(interval);
-      clearInterval(pingInterval);
     };
   }, []);
 
@@ -48,16 +42,6 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
             </span>
             NODE: k8s-master-sofia-01 [READY]
           </span>
-          <span className="hidden sm:inline text-cyber-border">|</span>
-          <span className="hidden sm:flex items-center gap-1 text-slate-300">
-            <Server className="w-3 h-3 text-cyber-cyan" />
-            OCP 4.14 / k8s v1.28
-          </span>
-          <span className="hidden md:inline text-cyber-border">|</span>
-          <span className="hidden md:flex items-center gap-1">
-            <Activity className="w-3 h-3 text-cyber-emerald" />
-            PING: <span className="text-cyber-cyan">{ping}ms</span> (eu-central-1)
-          </span>
         </div>
 
         <div className="flex items-center gap-4 text-right">
@@ -74,16 +58,13 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
       {/* Main branding & quick controls */}
       <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          {/* Locked-in Brand Logo (Option 2) */}
+          {/* Locked-in Brand Logo */}
           <Logo size={42} />
 
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-bold text-white tracking-wider flex items-center gap-2">
                 STEFAN BAKURDZHIEV
-                <span className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-cyber-cyan/10 border border-cyber-cyan/40 text-cyber-cyan">
-                  LEAD DEVOPS
-                </span>
               </h1>
             </div>
             <p className="text-xs text-cyber-muted font-mono flex items-center gap-1.5">

@@ -1,63 +1,23 @@
 import React, { useState } from 'react';
 import { 
   Terminal, ShieldCheck, Server, GitBranch, 
-  MapPin, Users, Layers, ExternalLink, Play
+  MapPin, Users, Layers, ExternalLink, Play, Github, Linkedin
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { TypewriterText } from './TypewriterText';
 import { profileData } from '../data/portfolioData';
 import { sound } from '../utils/audio';
 
-// Multi-method ASCII art variations for STEFAN (all strictly column-aligned & centered)
-const ASCII_STYLES = {
-  slant: {
-    label: 'SLANT',
-    cols: 39,
-    art: [
-      "   __________________________    _   __",
-      "  / ___/_  __/ ____/ ____/   |  / | / /",
-      "  \\__ \\ / / / __/ / /_  / /| | /  |/ / ",
-      " ___/ // / / /___/ __/ / ___ |/ /|  /  ",
-      "/____//_/ /_____/_/   /_/  |_/_/ |_/   "
-    ].join("\n")
-  },
-  standard: {
-    label: 'ANSI',
-    cols: 35,
-    art: [
-      " ____ _____ _____ _____ _    _   _ ",
-      "/ ___|_   _| ____|  ___/ \\  | \\ | |",
-      "\\___ \\ | | |  _| | |_ / _ \\ |  \\| |",
-      " ___) || | | |___|  _/ ___ \\| |\\  |",
-      "|____/ |_| |_____|_|/_/   \\_\\_| \\_|"
-    ].join("\n")
-  },
-  block: {
-    label: 'BLOCK',
-    cols: 35,
-    art: [
-      "█████ █████ █████ █████  ███  █   █",
-      "█       █   █     █     █   █ ██  █",
-      "█████   █   ████  ████  █████ █ █ █",
-      "    █   █   █     █     █   █ █  ██",
-      "█████   █   █████ █     █   █ █   █"
-    ].join("\n")
-  },
-  compact: {
-    label: 'MINI',
-    cols: 28,
-    art: [
-      " ___ _____ ___ ___ _   _  _ ",
-      "/ __|_   _| __| __/_\\ | \\| |",
-      "\\__ \\ | | | _|| _/ _ \\| .` |",
-      "|___/ |_| |___|_/_/ \\_\\_|\\_|"
-    ].join("\n")
-  }
-};
+// Mini 4-line column-aligned ASCII art for STEFAN (28 cols, centered)
+const ASCII_MINI = [
+  " ___ _____ ___ ___ _   _  _ ",
+  "/ __|_   _| __| __/_\\ | \\| |",
+  "\\__ \\ | | | _|| _/ _ \\| .` |",
+  "|___/ |_| |___|_/_/ \\_\\_|\\_|"
+].join("\n");
 
 export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
   const [viewMode, setViewMode] = useState('human'); // 'human' | 'yaml'
-  const [asciiMethod, setAsciiMethod] = useState('slant');
 
   return (
     <div className="space-y-6">
@@ -146,20 +106,20 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
                 href={profileData.github}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border text-slate-300 hover:text-white hover:border-slate-500 font-mono text-xs flex items-center gap-1.5 transition-all"
+                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
+                <Github className="w-3.5 h-3.5 text-white" />
                 <span>GitHub</span>
-                <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
 
               <a
                 href={profileData.linkedin}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border text-slate-300 hover:text-white hover:border-slate-500 font-mono text-xs flex items-center gap-1.5 transition-all"
+                className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
+                <Linkedin className="w-3.5 h-3.5 text-blue-400" />
                 <span className="text-cyber-cyan">LinkedIn</span>
-                <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
             </div>
           </div>
@@ -167,46 +127,16 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
           {/* ASCII Banner & Cluster Status Widget */}
           <div className="flex flex-col gap-3 w-full lg:w-80 shrink-0">
             <div className="bg-cyber-bg border border-cyber-border rounded p-3 text-xs font-mono select-none overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between text-cyber-muted pb-1.5 mb-2 border-b border-cyber-border text-[9px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400 font-semibold">SYS_BANNER.ASCII</span>
-                  <span className="text-cyber-emerald text-[8px] px-1 py-0.2 rounded bg-cyber-emerald/10 border border-cyber-emerald/30 font-bold">
-                    CENTERED
-                  </span>
-                </div>
-                {/* Interactive Method Switcher */}
-                <div className="flex items-center gap-1">
-                  {Object.keys(ASCII_STYLES).map((key) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        sound.playKey();
-                        setAsciiMethod(key);
-                      }}
-                      className={`px-1.5 py-0.5 rounded text-[8px] transition-all cursor-pointer font-bold uppercase ${
-                        asciiMethod === key
-                          ? 'bg-cyber-cyan text-cyber-bg shadow-xs'
-                          : 'text-slate-400 hover:text-white bg-cyber-surface/70 hover:bg-cyber-surface border border-cyber-border/60'
-                      }`}
-                      title={`Switch to ${ASCII_STYLES[key].label} ASCII method (${ASCII_STYLES[key].cols} cols)`}
-                    >
-                      {ASCII_STYLES[key].label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between text-cyber-muted pb-1 mb-2 border-b border-cyber-border text-[9px]">
+                <span className="text-slate-400 font-semibold">SYS_BANNER.ASCII</span>
+                <span className="text-cyber-emerald font-bold">UTF-8 // MINI</span>
               </div>
 
               {/* Mathematically Centered Terminal Display */}
               <div className="flex justify-center items-center w-full py-2.5 px-1 bg-cyber-surface/50 rounded border border-cyber-border/40 overflow-hidden text-center">
-                <pre className="text-cyber-cyan font-bold whitespace-pre font-mono leading-none tracking-normal inline-block text-left text-[9.5px] sm:text-[10px] drop-shadow-[0_0_8px_rgba(0,212,255,0.35)]">
-                  {ASCII_STYLES[asciiMethod].art}
+                <pre className="text-cyber-cyan font-bold whitespace-pre font-mono leading-none tracking-normal inline-block text-left text-[10px] sm:text-[10.5px] drop-shadow-[0_0_8px_rgba(0,212,255,0.35)]">
+                  {ASCII_MINI}
                 </pre>
-              </div>
-
-              {/* Terminal Metadata Footer */}
-              <div className="flex items-center justify-between text-[8px] text-cyber-muted mt-1.5 px-0.5 font-mono">
-                <span>METHOD: {ASCII_STYLES[asciiMethod].label}</span>
-                <span className="text-cyber-emerald">COLS: {ASCII_STYLES[asciiMethod].cols} // UTF-8</span>
               </div>
             </div>
 
