@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05080f" />
+      <stop offset="50%" stop-color="#0a1220" />
+      <stop offset="100%" stop-color="#05080f" />
+    </linearGradient>
+    <linearGradient id="cyan-emerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00d4ff" />
+      <stop offset="100%" stop-color="#00ff9d" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1b2d4b" stroke-width="0.8" opacity="0.35" />
+    </pattern>
+  </defs>
+
+  <!-- Background Base with Grid -->
+  <rect width="1200" height="630" fill="url(#bg-grad)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+
+  <!-- Outer HUD Frame & Corner Accents -->
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="#101a2b" fill-opacity="0.6" stroke="#1b2d4b" stroke-width="2" />
+  
+  <!-- Tactical Corner Crosshairs -->
+  <path d="M 30 50 L 50 50 M 50 30 L 50 50" stroke="#00d4ff" stroke-width="3" />
+  <path d="M 1170 50 L 1150 50 M 1150 30 L 1150 50" stroke="#00d4ff" stroke-width="3" />
+  <path d="M 30 580 L 50 580 M 50 600 L 50 580" stroke="#00ff9d" stroke-width="3" />
+  <path d="M 1170 580 L 1150 580 M 1150 600 L 1150 580" stroke="#00ff9d" stroke-width="3" />
+
+  <!-- Top System Ribbon -->
+  <rect x="70" y="70" width="1060" height="40" rx="6" fill="#05080f" stroke="#1b2d4b" />
+  <circle cx="95" cy="90" r="5" fill="#00ff9d" />
+  <text x="115" y="95" fill="#00ff9d" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="bold">NODE: k8s-master-sofia-01 [READY]</text>
+  <text x="500" y="95" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="14">OPENSHIFT 4.14 • KUBERNETES • GITOPS ARGOCD</text>
+  <text x="1000" y="95" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="14">UPTIME: 10y 5m</text>
+
+  <!-- Monogram Logo Box -->
+  <rect x="70" y="150" width="140" height="140" rx="20" fill="#0a1220" stroke="#00d4ff" stroke-width="3" />
+  <text x="105" y="245" fill="url(#cyan-emerald)" font-family="'JetBrains Mono', monospace" font-size="82" font-weight="bold">SB</text>
+
+  <!-- Headline & Identification -->
+  <text x="240" y="200" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="46" font-weight="900" letter-spacing="1">STEFAN BAKURDZHIEV</text>
+  <text x="240" y="245" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="24" font-weight="bold">Senior DevOps Engineer &amp; Platform Team Lead @ DXC Bulgaria</text>
+  <text x="240" y="280" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="18">OpenShift &amp; Kubernetes Specialist • GitOps • Zero-Trust Cloud Architecture</text>
+
+  <!-- Technical Focus Matrix / Feature Pills -->
+  <g transform="translate(70, 330)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="245" height="90" rx="8" fill="#0a1220" stroke="#1b2d4b" />
+    <text x="20" y="32" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold">KUBERNETES &amp; OCP</text>
+    <text x="20" y="60" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">OpenShift 4.14 EUS</text>
+    <text x="20" y="78" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11">Production Clusters</text>
+
+    <!-- Pill 2 -->
+    <rect x="270" y="0" width="245" height="90" rx="8" fill="#0a1220" stroke="#1b2d4b" />
+    <text x="290" y="32" fill="#00ff9d" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold">GITOPS &amp; AUTOMATION</text>
+    <text x="290" y="60" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">ArgoCD &amp; Terraform</text>
+    <text x="290" y="78" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11">Automated Sync Waves</text>
+
+    <!-- Pill 3 -->
+    <rect x="540" y="0" width="245" height="90" rx="8" fill="#0a1220" stroke="#1b2d4b" />
+    <text x="560" y="32" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold">SUPPLY CHAIN SECURITY</text>
+    <text x="560" y="60" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">Trivy + Cosign</text>
+    <text x="560" y="78" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11">Zero-Trust Admission</text>
+
+    <!-- Pill 4 -->
+    <rect x="810" y="0" width="250" height="90" rx="8" fill="#0a1220" stroke="#1b2d4b" />
+    <text x="830" y="32" fill="#00ff9d" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold">PLATFORM LEADERSHIP</text>
+    <text x="830" y="60" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">Squad Lead (8 Eng)</text>
+    <text x="830" y="78" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11">DXC Technology Bulgaria</text>
+  </g>
+
+  <!-- Bottom Terminal Status Bar -->
+  <rect x="70" y="470" width="1060" height="70" rx="8" fill="#05080f" stroke="#1b2d4b" />
+  <text x="100" y="512" fill="#00ff9d" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">stefan@k8s-master:~#</text>
+  <text x="320" y="512" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16">curl -s https://sbakurdzhiev.eu/blog | jq .latest_dispatches</text>
+  <text x="960" y="512" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="15" font-weight="bold">sbakurdzhiev.eu</text>
+</svg>

@@ -12,10 +12,44 @@ import { FooterTelemetry } from './components/FooterTelemetry';
 import { sound } from './utils/audio';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      const validTabs = ['overview', 'career', 'projects', 'telemetry', 'pipeline', 'terminal', 'blog'];
+      if (validTabs.includes(tabParam)) {
+        return tabParam;
+      }
+    }
+    return 'overview';
+  });
+
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [crtEnabled, setCrtEnabled] = useState(true);
   const [isCliOpen, setIsCliOpen] = useState(false);
+
+  // Sync browser back/forward button
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'overview';
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleSelectTab = (tabId) => {
+    setActiveTab(tabId);
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('tab', tabId);
+      if (tabId !== 'blog') {
+        newUrl.searchParams.delete('post');
+      }
+      window.history.pushState({ tab: tabId }, '', newUrl.toString());
+    }
+  };
 
   // Global key listener for backtick `~` to toggle terminal
   useEffect(() => {
@@ -56,14 +90,14 @@ export function App() {
         {/* Dual Mode Navigation Bar */}
         <NavigationTabs
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSelectTab}
         />
 
         {/* Main Workspace Buffer */}
         <main className="max-w-7xl mx-auto px-4 py-8">
           {activeTab === 'overview' && (
             <OverviewSection
-              onNavigateTab={setActiveTab}
+              onNavigateTab={handleSelectTab}
               onOpenCli={handleOpenCli}
             />
           )}
@@ -98,7 +132,7 @@ export function App() {
               </div>
               <TerminalCLI
                 isOpen={true}
-                onClose={() => setActiveTab('overview')}
+                onClose={() => handleSelectTab('overview')}
                 onTriggerPipeline={handleTriggerPipeline}
               />
             </div>

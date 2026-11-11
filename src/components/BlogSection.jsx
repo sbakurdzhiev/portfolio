@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Calendar, Clock, Tag, Search, ArrowRight, 
   ChevronLeft, Terminal, Shield, Cpu, GitBranch, Users, 
-  Share2, Check, ExternalLink, Bookmark
+  Share2, Check, ExternalLink, Bookmark, Edit3, PlusCircle, 
+  Copy, Sparkles, Send, Linkedin
 } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { PublishingStudioModal } from './PublishingStudioModal';
 
-const BLOG_ARTICLES = [
+// Tactical Default Published Dispatches
+const INITIAL_BLOG_ARTICLES = [
   {
     id: 'openshift-zero-downtime-upgrade',
     title: 'Zero-Downtime OpenShift 4.14 In-Place Upgrades in Banking Environments',
@@ -241,14 +244,41 @@ Leading engineers is not about micromanaging pull requests — it is about remov
 ];
 
 export const BlogSection = () => {
+  const [articles, setArticles] = useState(INITIAL_BLOG_ARTICLES);
   const [selectedArticleId, setSelectedArticleId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMd, setCopiedMd] = useState(false);
+  const [isCmsOpen, setIsCmsOpen] = useState(false);
+
+  // Load any custom posts from localStorage & check URL params on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('portfolio-custom-posts');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge custom posts with initials, avoiding duplicate ids
+          const merged = [...parsed, ...INITIAL_BLOG_ARTICLES.filter(init => !parsed.some(p => p.id === init.id))];
+          setArticles(merged);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Check URL parameters for direct deep-link (e.g. ?tab=blog&post=openshift-zero-downtime)
+    const params = new URLSearchParams(window.location.search);
+    const postParam = params.get('post');
+    if (postParam) {
+      setSelectedArticleId(postParam);
+    }
+  }, []);
 
   const categories = ['ALL', 'OpenShift & K8s', 'GitOps & CI/CD', 'Security', 'Platform Leadership'];
 
-  const filteredArticles = BLOG_ARTICLES.filter(article => {
+  const filteredArticles = articles.filter(article => {
     const matchesCategory = selectedCategory === 'ALL' || article.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -257,29 +287,97 @@ export const BlogSection = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const selectedArticle = BLOG_ARTICLES.find(a => a.id === selectedArticleId);
+  const selectedArticle = articles.find(a => a.id === selectedArticleId);
 
+  // Open article & update URL without full page reload
   const handleOpenArticle = (id) => {
     sound.playBeep(650, 0.05);
     setSelectedArticleId(id);
+    const found = articles.find(a => a.id === id);
+    if (found) {
+      document.title = `${found.title} | Stefan Bakurdzhiev`;
+    }
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', 'blog');
+    newUrl.searchParams.set('post', id);
+    window.history.pushState({ post: id }, '', newUrl.toString());
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
+  // Back to list & restore URL/title
   const handleBack = () => {
     sound.playBeep(450, 0.04);
     setSelectedArticleId(null);
+    document.title = 'Stefan Bakurdzhiev | Senior DevOps Engineer & Platform Lead';
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', 'blog');
+    newUrl.searchParams.delete('post');
+    window.history.pushState({}, '', newUrl.toString());
+  };
+
+  const getCanonicalPostUrl = () => {
+    if (!selectedArticle) return 'https://sbakurdzhiev.eu/';
+    return `https://sbakurdzhiev.eu/?tab=blog&post=${encodeURIComponent(selectedArticle.id)}`;
   };
 
   const handleCopyLink = () => {
     sound.playBeep(700, 0.04);
-    navigator.clipboard?.writeText(window.location.href);
+    const url = getCanonicalPostUrl();
+    navigator.clipboard?.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const handleCopyMarkdown = () => {
+    sound.playKey();
+    if (!selectedArticle) return;
+    const fullMd = [
+      `# ${selectedArticle.title}`,
+      `> Published: ${selectedArticle.date} • ${selectedArticle.readTime} • Category: ${selectedArticle.category}`,
+      `> By Stefan Bakurdzhiev (Senior DevOps & Platform Lead @ DXC Bulgaria)`,
+      '',
+      `**Summary**: ${selectedArticle.summary}`,
+      '',
+      selectedArticle.content
+    ].join('\n');
+
+    navigator.clipboard?.writeText(fullMd);
+    setCopiedMd(true);
+    setTimeout(() => setCopiedMd(false), 2000);
+  };
+
+  // Social Share Handlers
+  const handleShareLinkedIn = () => {
+    sound.playKey();
+    const url = encodeURIComponent(getCanonicalPostUrl());
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShareTwitter = () => {
+    sound.playKey();
+    if (!selectedArticle) return;
+    const text = encodeURIComponent(`"${selectedArticle.title}" by @sbakurdzhiev`);
+    const url = encodeURIComponent(getCanonicalPostUrl());
+    const hashtags = 'devops,kubernetes,openshift,cloudnative';
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}&hashtags=${hashtags}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShareReddit = () => {
+    sound.playKey();
+    if (!selectedArticle) return;
+    const title = encodeURIComponent(selectedArticle.title);
+    const url = encodeURIComponent(getCanonicalPostUrl());
+    window.open(`https://www.reddit.com/submit?title=${title}&url=${url}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handlePostPublishedFromStudio = (newPost) => {
+    setArticles(prev => [newPost, ...prev.filter(p => p.id !== newPost.id)]);
+    handleOpenArticle(newPost.id);
+  };
+
   return (
     <div className="space-y-6 font-mono">
-      {/* Top Section Header */}
+      {/* Top Section Header with On-The-Go CMS Studio Trigger */}
       <div className="border border-cyber-border bg-cyber-surface rounded-lg p-5 sm:p-6 relative overflow-hidden corner-bracket">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
@@ -288,16 +386,31 @@ export const BlogSection = () => {
               <span>TACTICAL FIELD LOGS // ARCHITECTURE JOURNAL</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
-              DevOps, Kubernetes & Platform Engineering Insights
+              DevOps, Kubernetes &amp; Platform Engineering Insights
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
               Production playbooks, post-mortems, and architectural blueprints written from real-world operations in enterprise banking, OpenShift clustering, and platform team leadership.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 bg-cyber-bg p-2 rounded border border-cyber-border text-xs">
-            <span className="text-slate-400">STATUS:</span>
-            <span className="text-cyber-emerald font-bold">4 PUBLISHED DISPATCHES</span>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Decap CMS style On-the-go publishing trigger */}
+            <button
+              onClick={() => {
+                sound.playBeep(700, 0.05);
+                setIsCmsOpen(true);
+              }}
+              className="px-3.5 py-2 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs flex items-center gap-2 shadow-glow-cyan hover:opacity-90 transition-all cursor-pointer"
+              title="Launch On-the-Go Publishing Studio to post news/guides from mobile or laptop"
+            >
+              <Edit3 className="w-3.5 h-3.5 fill-black" />
+              <span>DRAFT STUDIO [CMS]</span>
+            </button>
+
+            <div className="flex items-center gap-1.5 bg-cyber-bg px-2.5 py-2 rounded border border-cyber-border text-xs">
+              <span className="text-slate-400">DISPATCHES:</span>
+              <span className="text-cyber-emerald font-bold">{articles.length} ONLINE</span>
+            </div>
           </div>
         </div>
       </div>
@@ -305,25 +418,72 @@ export const BlogSection = () => {
       {/* SINGLE ARTICLE READER VIEW */}
       {selectedArticle ? (
         <div className="space-y-4">
-          {/* Back Navigation Bar */}
-          <div className="flex items-center justify-between bg-cyber-surface border border-cyber-border p-3 rounded-lg text-xs">
+          {/* Back Navigation Bar & Rapid Social Share Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-cyber-surface border border-cyber-border p-3 rounded-lg text-xs">
             <button
               onClick={handleBack}
-              className="flex items-center gap-1.5 text-cyber-cyan hover:text-white px-2.5 py-1 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan transition-colors cursor-pointer font-bold"
+              className="flex items-center gap-1.5 text-cyber-cyan hover:text-white px-2.5 py-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan transition-colors cursor-pointer font-bold"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>RETURN TO DISPATCH LIST</span>
             </button>
 
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 hidden sm:inline">{selectedArticle.readTime}</span>
+            {/* Social Sharing Hub */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-cyber-muted uppercase mr-1 hidden sm:inline">SHARE:</span>
+
+              {/* LinkedIn Share */}
+              <button
+                onClick={handleShareLinkedIn}
+                className="px-2.5 py-1.5 rounded bg-[#0a66c2]/20 border border-[#0a66c2]/50 hover:bg-[#0a66c2] text-[#70b5f9] hover:text-white transition-all flex items-center gap-1.5 text-xs cursor-pointer font-bold"
+                title="Share to LinkedIn feed"
+              >
+                <Linkedin className="w-3.5 h-3.5 text-[#0a66c2] group-hover:text-white" />
+                <span>LINKEDIN</span>
+              </button>
+
+              {/* X (Twitter) Share */}
+              <button
+                onClick={handleShareTwitter}
+                className="px-2.5 py-1.5 rounded bg-cyber-bg border border-slate-700 hover:border-white text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs cursor-pointer font-bold"
+                title="Post to X / Twitter"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                <span>X / TWITTER</span>
+              </button>
+
+              {/* Reddit Share */}
+              <button
+                onClick={handleShareReddit}
+                className="px-2.5 py-1.5 rounded bg-[#ff4500]/20 border border-[#ff4500]/50 hover:bg-[#ff4500] text-[#ff7744] hover:text-white transition-all flex items-center gap-1.5 text-xs cursor-pointer font-bold"
+                title="Submit link to r/devops or r/kubernetes"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.702zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+                </svg>
+                <span>REDDIT</span>
+              </button>
+
+              {/* Copy Direct Permalink */}
               <button
                 onClick={handleCopyLink}
-                className="flex items-center gap-1 px-2.5 py-1 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer text-xs"
-                title="Copy share link"
+                className="px-2.5 py-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1"
+                title="Copy permanent shareable link"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5 text-cyber-emerald" /> : <Share2 className="w-3.5 h-3.5 text-cyber-cyan" />}
-                <span>{copiedLink ? 'COPIED' : 'SHARE'}</span>
+                <span>{copiedLink ? 'LINK COPIED!' : 'COPY LINK'}</span>
+              </button>
+
+              {/* Copy as Markdown for Substack/Medium cross-posting */}
+              <button
+                onClick={handleCopyMarkdown}
+                className="hidden lg:flex px-2.5 py-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer text-xs items-center gap-1"
+                title="Copy formatted markdown to syndicate to Substack or Medium"
+              >
+                {copiedMd ? <Check className="w-3.5 h-3.5 text-cyber-emerald" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                <span>{copiedMd ? 'MD COPIED!' : 'COPY MD'}</span>
               </button>
             </div>
           </div>
@@ -371,20 +531,22 @@ export const BlogSection = () => {
             </div>
 
             {/* Key Technical Highlights Checklist */}
-            <div className="bg-cyber-bg border border-cyber-border rounded-lg p-4 space-y-2">
-              <div className="text-xs font-bold text-cyber-emerald flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-cyber-emerald" />
-                <span>ARCHITECTURAL HIGHLIGHTS & OPERATIONAL CHECKPOINTS</span>
+            {selectedArticle.highlights && selectedArticle.highlights.length > 0 && (
+              <div className="bg-cyber-bg border border-cyber-border rounded-lg p-4 space-y-2">
+                <div className="text-xs font-bold text-cyber-emerald flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-cyber-emerald" />
+                  <span>ARCHITECTURAL HIGHLIGHTS &amp; OPERATIONAL CHECKPOINTS</span>
+                </div>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300 pt-1">
+                  {selectedArticle.highlights.map((h, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-cyber-cyan font-bold">▶</span>
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300 pt-1">
-                {selectedArticle.highlights.map((h, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-cyber-cyan font-bold">▶</span>
-                    <span>{h}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
 
             {/* Markdown Body Content */}
             <div className="text-xs sm:text-sm text-slate-200 leading-relaxed space-y-4 pt-2">
@@ -447,16 +609,25 @@ export const BlogSection = () => {
                 </div>
                 <div>
                   <div className="font-bold text-white">Stefan Bakurdzhiev</div>
-                  <div className="text-[11px]">Senior DevOps & Platform Engineer • DXC Bulgaria</div>
+                  <div className="text-[11px]">Senior DevOps &amp; Platform Lead • DXC Bulgaria</div>
                 </div>
               </div>
 
-              <button
-                onClick={handleBack}
-                className="px-4 py-2 rounded bg-cyber-panel border border-cyber-cyan/50 text-cyber-cyan hover:bg-cyber-cyan hover:text-black font-bold transition-all cursor-pointer"
-              >
-                ← BACK TO ALL ARTICLES
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleShareLinkedIn}
+                  className="px-3 py-1.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-cyber-cyan" />
+                  <span>SHARE DISPATCH</span>
+                </button>
+                <button
+                  onClick={handleBack}
+                  className="px-4 py-1.5 rounded bg-cyber-panel border border-cyber-cyan/50 text-cyber-cyan hover:bg-cyber-cyan hover:text-black font-bold transition-all cursor-pointer"
+                >
+                  ← ALL ARTICLES
+                </button>
+              </div>
             </div>
           </article>
         </div>
@@ -490,7 +661,7 @@ export const BlogSection = () => {
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search logs & topics..."
+                placeholder="Search logs &amp; topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-cyber-bg border border-cyber-border rounded pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan"
@@ -501,7 +672,7 @@ export const BlogSection = () => {
           {/* Articles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredArticles.map((article) => {
-              const Icon = article.icon;
+              const Icon = article.icon || Cpu;
               return (
                 <div
                   key={article.id}
@@ -563,6 +734,13 @@ export const BlogSection = () => {
           )}
         </div>
       )}
+
+      {/* On-the-Go Publishing CMS Modal Studio */}
+      <PublishingStudioModal
+        isOpen={isCmsOpen}
+        onClose={() => setIsCmsOpen(false)}
+        onPostPublished={handlePostPublishedFromStudio}
+      />
     </div>
   );
 };
