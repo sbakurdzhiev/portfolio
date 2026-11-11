@@ -1,18 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { LogoHelm } from './logos/LogoHelm';
-import { LogoMonogram } from './logos/LogoMonogram';
-import { LogoShield } from './logos/LogoShield';
-import { LogoPipeline } from './logos/LogoPipeline';
+import { LogoCyberHexSB } from './logos/LogoCyberHexSB';
+import { LogoPromptSB } from './logos/LogoPromptSB';
+import { LogoEmblemSB } from './logos/LogoEmblemSB';
+import { LogoDataflowSB } from './logos/LogoDataflowSB';
 
 export const LOGO_TEMPLATES = [
-  { id: 'helm', name: 'Tactical K8s Helm', concept: 'Kubernetes Control Plane & Microservice Hub', component: LogoHelm },
-  { id: 'monogram', name: 'Isometric SB Matrix', concept: 'Circuit Monogram & Active Beacons', component: LogoMonogram },
-  { id: 'shield', name: 'Hardened SRE Shield', concept: 'Cybersecurity & 3-Node Resilient Topology', component: LogoShield },
-  { id: 'pipeline', name: 'GitOps Hex-Fabric', concept: 'Continuous Delivery Möbius & Canary Sync', component: LogoPipeline },
+  { 
+    id: 'cyberhex', 
+    name: 'Continuous Hex-Ribbon SB', 
+    concept: 'Seamless geometric ribbon where S flows directly into dual B chambers inside a sleek hex badge.',
+    badge: 'OPTION 1',
+    component: LogoCyberHexSB 
+  },
+  { 
+    id: 'prompt', 
+    name: 'Terminal Prompt & Cursor SB', 
+    concept: 'Double terminal chevrons (S) paired with dual container pod blocks & blinking cursor (B).',
+    badge: 'OPTION 2',
+    component: LogoPromptSB 
+  },
+  { 
+    id: 'emblem', 
+    name: 'Architectural Chamfered SB', 
+    concept: 'Monolithic, bold interlocking monogram with 45° technical chamfers and diamond framing.',
+    badge: 'OPTION 3',
+    component: LogoEmblemSB 
+  },
+  { 
+    id: 'dataflow', 
+    name: 'Circuit Dataflow & Cluster SB', 
+    concept: 'Illuminated network topology lines forming SB with high-availability cluster nodes.',
+    badge: 'OPTION 4',
+    component: LogoDataflowSB 
+  },
 ];
 
 export const Logo = ({ size = 42, className = '', templateId = null, showGlow = true }) => {
-  const [activeTemplate, setActiveTemplate] = useState('helm');
+  const [activeTemplate, setActiveTemplate] = useState('cyberhex');
 
   useEffect(() => {
     if (templateId) {
@@ -20,11 +44,11 @@ export const Logo = ({ size = 42, className = '', templateId = null, showGlow = 
       return;
     }
 
-    const saved = localStorage.getItem('portfolio-logo-template') || 'helm';
+    const saved = localStorage.getItem('portfolio-logo-template') || 'cyberhex';
     setActiveTemplate(saved);
 
     const handleStorage = () => {
-      const updated = localStorage.getItem('portfolio-logo-template') || 'helm';
+      const updated = localStorage.getItem('portfolio-logo-template') || 'cyberhex';
       setActiveTemplate(updated);
     };
 

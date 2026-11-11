@@ -7,7 +7,7 @@ const AVAILABLE_COMMANDS = [
   'help', 'bio', 'skills', 'projects', 'pipeline run', 
   'kubectl get nodes', 'kubectl get pods', 'kubectl get crds',
   'theme', 'theme cyber', 'theme amber', 'theme tokyonight', 'theme matrix',
-  'logo', 'logo helm', 'logo monogram', 'logo shield', 'logo pipeline',
+  'logo', 'logo cyberhex', 'logo prompt', 'logo emblem', 'logo dataflow',
   'contact', 'whoami', 'clear', 'sudo rm -rf /', 'matrix', 'exit'
 ];
 
@@ -108,23 +108,23 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
     } else if (lower.startsWith('logo')) {
       const parts = lower.split(/\s+/);
       const chosen = parts[1];
-      const valid = ['helm', 'monogram', 'shield', 'pipeline'];
+      const valid = ['cyberhex', 'prompt', 'emblem', 'dataflow'];
 
       if (!chosen) {
         responseEntries = [
-          { text: 'AVAILABLE LOGO TEMPLATES:', color: 'text-cyber-cyan font-bold' },
-          { text: '  1. helm      - Tactical K8s Helm & Core Control Plane', color: 'text-slate-300' },
-          { text: '  2. monogram  - Isometric SB Matrix & Active Cluster Nodes', color: 'text-slate-300' },
-          { text: '  3. shield    - Hardened SRE & Security Topology Shield', color: 'text-slate-300' },
-          { text: '  4. pipeline  - Continuous GitOps Delivery Hex-Fabric', color: 'text-slate-300' },
-          { text: 'Usage: logo <helm|monogram|shield|pipeline>', color: 'text-cyber-muted' },
+          { text: 'AVAILABLE PERSONAL BRAND LOGOS (SB MONOGRAM SERIES):', color: 'text-cyber-cyan font-bold' },
+          { text: '  1. cyberhex  - Continuous Hex-Ribbon SB (Option 1)', color: 'text-slate-300' },
+          { text: '  2. prompt    - Terminal Prompt & Cursor SB (Option 2)', color: 'text-slate-300' },
+          { text: '  3. emblem    - Architectural Chamfered SB Monogram (Option 3)', color: 'text-slate-300' },
+          { text: '  4. dataflow  - Circuit Dataflow & Cluster Node SB (Option 4)', color: 'text-slate-300' },
+          { text: 'Usage: logo <cyberhex|prompt|emblem|dataflow>', color: 'text-cyber-muted' },
         ];
       } else if (valid.includes(chosen)) {
         localStorage.setItem('portfolio-logo-template', chosen);
         window.dispatchEvent(new Event('logo-template-changed'));
         sound.playDeploySuccess();
         responseEntries = [
-          { text: `[OK] Active Logo Insignia switched to: ${chosen.toUpperCase()}`, color: 'text-cyber-emerald font-bold' }
+          { text: `[OK] Active Personal Brand Logo switched to: ${chosen.toUpperCase()}`, color: 'text-cyber-emerald font-bold' }
         ];
       } else {
         responseEntries = [

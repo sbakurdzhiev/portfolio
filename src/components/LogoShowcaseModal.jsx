@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Sparkles, Layers, ShieldCheck, Compass, GitMerge } from 'lucide-react';
+import { X, Check, Sparkles, Terminal, Hexagon, Cpu, ShieldCheck } from 'lucide-react';
 import { LOGO_TEMPLATES } from './Logo';
 import { sound } from '../utils/audio';
 
 export const LogoShowcaseModal = ({ isOpen, onClose }) => {
-  const [currentId, setCurrentId] = useState('helm');
+  const [currentId, setCurrentId] = useState('cyberhex');
 
   useEffect(() => {
-    const saved = localStorage.getItem('portfolio-logo-template') || 'helm';
+    const saved = localStorage.getItem('portfolio-logo-template') || 'cyberhex';
     setCurrentId(saved);
   }, [isOpen]);
 
@@ -22,10 +22,10 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
 
   const getIcon = (id) => {
     switch (id) {
-      case 'helm': return Compass;
-      case 'monogram': return Layers;
-      case 'shield': return ShieldCheck;
-      case 'pipeline': return GitMerge;
+      case 'cyberhex': return Hexagon;
+      case 'prompt': return Terminal;
+      case 'emblem': return ShieldCheck;
+      case 'dataflow': return Cpu;
       default: return Sparkles;
     }
   };
@@ -39,11 +39,11 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-cyber-cyan animate-pulse" />
               <h3 className="text-sm sm:text-base font-bold text-white tracking-wider">
-                TACTICAL LOGO TEMPLATE SELECTOR // 4 BESPOKE CONCEPTS
+                PERSONAL BRAND LOGO SELECTOR // SB MONOGRAM SERIES
               </h3>
             </div>
             <p className="text-xs text-cyber-muted mt-0.5">
-              Engineered specifically for Stefan Bakurdzhiev • Senior DevOps & OpenShift / Kubernetes Expert
+              Stefan Bakurdzhiev personal brand insignia • Choose your preferred aesthetic
             </p>
           </div>
 
@@ -57,7 +57,7 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
 
         {/* Templates Grid */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-          {LOGO_TEMPLATES.map((tmpl, idx) => {
+          {LOGO_TEMPLATES.map((tmpl) => {
             const Icon = getIcon(tmpl.id);
             const Component = tmpl.component;
             const isSelected = currentId === tmpl.id;
@@ -76,7 +76,7 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-[11px] px-2 py-0.5 rounded bg-cyber-panel border border-cyber-border text-cyber-cyan font-bold flex items-center gap-1.5">
                     <Icon className="w-3.5 h-3.5 text-cyber-cyan" />
-                    OPTION {idx + 1}
+                    {tmpl.badge}
                   </span>
 
                   {isSelected ? (
@@ -94,7 +94,7 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
                 {/* Logo Graphic Center */}
                 <div className="py-4 flex justify-center items-center">
                   <div className="p-4 rounded-xl bg-cyber-panel/60 border border-cyber-border/70 group-hover:scale-110 transition-transform duration-300">
-                    <Component size={76} />
+                    <Component size={82} />
                   </div>
                 </div>
 
@@ -123,7 +123,7 @@ export const LogoShowcaseModal = ({ isOpen, onClose }) => {
                       <span>SELECTED & ACTIVE</span>
                     </>
                   ) : (
-                    <span>SELECT THIS TEMPLATE</span>
+                    <span>SELECT THIS LOGO</span>
                   )}
                 </button>
               </div>
