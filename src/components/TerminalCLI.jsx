@@ -7,7 +7,6 @@ const AVAILABLE_COMMANDS = [
   'help', 'bio', 'skills', 'projects', 'pipeline run', 
   'kubectl get nodes', 'kubectl get pods', 'kubectl get crds',
   'theme', 'theme cyber', 'theme amber', 'theme tokyonight', 'theme matrix',
-  'logo', 'logo cyberhex', 'logo prompt', 'logo emblem', 'logo dataflow',
   'contact', 'whoami', 'clear', 'sudo rm -rf /', 'matrix', 'exit'
 ];
 
@@ -17,7 +16,7 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [outputLines, setOutputLines] = useState([
     { text: '☸️  Stefan Bakurdzhiev Tactical Kubernetes & OpenShift Interactive Shell [v4.14-k8s]', color: 'text-cyber-cyan font-bold' },
-    { text: 'Type "help" to view tactical commands, "theme [name]" for palettes, or "logo [name]" to switch insignia.', color: 'text-slate-400' },
+    { text: 'Type "help" to view tactical commands or "theme [cyber|amber|tokyonight|matrix]" to switch visual palettes.', color: 'text-slate-400' },
     { text: '----------------------------------------------------------------------------------', color: 'text-cyber-border' },
   ]);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -97,7 +96,6 @@ export const TerminalCLI = ({ isOpen, onClose, onTriggerPipeline }) => {
         { text: '  projects        - List open-source architectures & handbooks', color: 'text-slate-300' },
         { text: '  pipeline run    - Execute live automated GitOps CI/CD runner', color: 'text-cyber-emerald font-bold' },
         { text: '  theme [name]    - Switch palette: cyber, amber, tokyonight, matrix', color: 'text-cyber-cyan' },
-        { text: '  logo [name]     - Switch insignia: helm, monogram, shield, pipeline', color: 'text-cyber-cyan font-bold' },
         { text: '  kubectl get nodes - List cluster node status and versions', color: 'text-slate-300' },
         { text: '  kubectl get pods  - List running microservice pods in production', color: 'text-slate-300' },
         { text: '  kubectl get crds  - View active Custom Resource Definitions', color: 'text-slate-300' },

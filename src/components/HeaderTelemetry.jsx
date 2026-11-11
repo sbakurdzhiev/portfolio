@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Volume2, VolumeX, Monitor, Server, Activity, ExternalLink, Sparkles } from 'lucide-react';
+import { Terminal, Volume2, VolumeX, Monitor, Server, Activity, ExternalLink } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { LogoShowcaseModal } from './LogoShowcaseModal';
 import { sound } from '../utils/audio';
 
 export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, setCrtEnabled, onOpenCli }) => {
   const [time, setTime] = useState('');
   const [ping, setPing] = useState(14);
-  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
   useEffect(() => {
     const updateClock = () => {
@@ -76,20 +74,8 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
       {/* Main branding & quick controls */}
       <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          {/* Clickable Logo opens template selector */}
-          <button
-            onClick={() => {
-              sound.playBeep(650, 0.05);
-              setIsLogoModalOpen(true);
-            }}
-            title="Click to Choose Logo Template"
-            className="group relative cursor-pointer"
-          >
-            <Logo size={42} />
-            <span className="absolute -bottom-1 -right-1 px-1 py-0.2 rounded bg-cyber-panel border border-cyber-cyan/50 text-[8px] text-cyber-cyan font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-              CHANGE
-            </span>
-          </button>
+          {/* Locked-in Brand Logo (Option 2) */}
+          <Logo size={42} />
 
           <div>
             <div className="flex items-center gap-2">
@@ -107,21 +93,8 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           </div>
         </div>
 
-        {/* Toggles, Logo Picker, Theme Switcher & CLI Button */}
+        {/* Toggles, Theme Switcher & CLI Button */}
         <div className="flex items-center gap-2 sm:gap-2.5 text-xs font-mono">
-          {/* Logo Selector Trigger */}
-          <button
-            onClick={() => {
-              sound.playBeep(650, 0.05);
-              setIsLogoModalOpen(true);
-            }}
-            className="px-2.5 py-1.5 rounded border border-cyber-border bg-cyber-bg hover:border-cyber-cyan text-cyber-text hover:text-white transition-all flex items-center gap-1.5 text-xs shadow-sm cursor-pointer"
-            title="Choose from 4 Bespoke Logo Templates"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyber-emerald" />
-            <span className="hidden md:inline text-[11px] font-semibold">LOGOS [4]</span>
-          </button>
-
           {/* Theme Selector */}
           <ThemeSwitcher />
 
@@ -129,7 +102,7 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           <button
             onClick={handleSoundToggle}
             title={soundEnabled ? "Mute Synthesized Audio FX" : "Enable Retro Audio FX"}
-            className={`px-2.5 py-1.5 rounded border transition-colors flex items-center gap-1.5 ${
+            className={`px-2.5 py-1.5 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
               soundEnabled
                 ? 'bg-cyber-cyan/15 border-cyber-cyan text-cyber-cyan shadow-glow-subtle'
                 : 'bg-cyber-bg border-cyber-border text-cyber-muted hover:border-slate-500 hover:text-slate-200'
@@ -143,7 +116,7 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           <button
             onClick={handleCrtToggle}
             title={crtEnabled ? "Disable CRT Scanlines" : "Enable CRT Scanlines"}
-            className={`px-2.5 py-1.5 rounded border transition-colors flex items-center gap-1.5 ${
+            className={`px-2.5 py-1.5 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
               crtEnabled
                 ? 'bg-cyber-emerald/15 border-cyber-emerald text-cyber-emerald'
                 : 'bg-cyber-bg border-cyber-border text-cyber-muted hover:border-slate-500 hover:text-slate-200'
@@ -173,12 +146,6 @@ export const HeaderTelemetry = ({ soundEnabled, setSoundEnabled, crtEnabled, set
           </a>
         </div>
       </div>
-
-      {/* Logo Showcase Modal */}
-      <LogoShowcaseModal
-        isOpen={isLogoModalOpen}
-        onClose={() => setIsLogoModalOpen(false)}
-      />
     </header>
   );
 };
