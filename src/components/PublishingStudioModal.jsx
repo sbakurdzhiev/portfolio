@@ -3,9 +3,17 @@ import {
   X, Save, Download, Copy, Check, Eye, Edit3, 
   Terminal, Sparkles, FileText, Send, Tag, Clock, 
   FolderPlus, AlertTriangle, Key, ExternalLink, Lock,
-  Unlock, Shield, ShieldAlert, LogOut, EyeOff
+  Unlock, Shield, ShieldAlert, LogOut, EyeOff, Trash2,
+  Calendar, Layers, CheckCircle2, RotateCcw, Plus,
+  Info, ArrowRight, Upload
 } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { 
+  getAllArticles, 
+  saveCustomArticle, 
+  deleteCustomArticle, 
+  buildMarkdownPayload 
+} from '../utils/markdownParser';
 
 const STORAGE_KEY_DRAFT = 'portfolio-blog-draft-v1';
 const STORAGE_KEY_GITHUB_TOKEN = 'portfolio-github-pat';
@@ -26,20 +34,31 @@ async function computeSha256(str) {
 const INITIAL_TEMPLATE = `### Context & Problem Statement
 Briefly describe the operational challenge or incident you encountered in production...
 
+> [!NOTE]
+> Add architectural context or background constraints here.
+
 ### Architectural Solution
 Explain the approach, tools, and design decisions...
 
 \`\`\`bash
-# Command or manifest example
-oc get pods -A | grep Error
+# Operational command or verification script
+oc get pods -A | grep -v Running
 \`\`\`
+
+| Component | Target State | Failure Strategy |
+| :--- | :--- | :--- |
+| **Control Plane** | Healthy Quorum | Automatic failover |
+| **Worker Nodes** | Ready & Drainable | Eviction with PDB enforcement |
+
+> [!TIP]
+> Add a battlefield-tested pro-tip for cluster operators.
 
 ### Verification & Key Takeaways
 1. First operational rule or checklist item
 2. Second takeaway for production reliability
 `;
 
-export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
+export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initialPost = null }) => {
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
@@ -51,10 +70,13 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
 
   // Editor states
-  const [activeSubTab, setActiveSubTab] = useState('editor'); // 'meta' | 'editor' | 'preview' | 'security'
+  const [activeSubTab, setActiveSubTab] = useState('editor'); // 'manager' | 'editor' | 'preview' | 'security'
+  const [editingPostId, setEditingPostId] = useState(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [category, setCategory] = useState('OpenShift & K8s');
+  const [status, setStatus] = useState('published'); // 'published' | 'draft' | 'scheduled'
+  const [scheduledDate, setScheduledDate] = useState('');
   const [tagsInput, setTagsInput] = useState('OpenShift, Kubernetes, Production');
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState(INITIAL_TEMPLATE);
@@ -64,6 +86,17 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
   const [statusMessage, setStatusMessage] = useState('');
   const [isCommitting, setIsCommitting] = useState(false);
 
+  // Manager state
+  const [managerArticles, setManagerArticles] = useState([]);
+  const [managerFilter, setManagerFilter] = useState('ALL'); // 'ALL' | 'PUBLISHED' | 'DRAFT' | 'SCHEDULED'
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+  // Load all articles for manager
+  const reloadManagerArticles = () => {
+    const list = getAllArticles();
+    setManagerArticles(list);
+  };
+
   // Check session authentication on mount or when opened
   useEffect(() => {
     if (isOpen) {
@@ -71,39 +104,63 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
       setIsAuthenticated(isSessionAuthed);
       setAuthError('');
       setAuthPassword('');
-    }
-  }, [isOpen]);
+      reloadManagerArticles();
 
-  // Load saved draft and token on mount
-  useEffect(() => {
-    const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        setTitle(parsed.title || '');
-        setSlug(parsed.slug || '');
-        setCategory(parsed.category || 'OpenShift & K8s');
-        setTagsInput(parsed.tagsInput || 'OpenShift, Kubernetes');
-        setSummary(parsed.summary || '');
-        setContent(parsed.content || INITIAL_TEMPLATE);
-      } catch (e) {
-        console.error('Failed to parse draft:', e);
+      // If initialPost is passed, load it directly into editor
+      if (initialPost) {
+        loadArticleIntoEditor(initialPost);
+        setActiveSubTab('editor');
       }
     }
+  }, [isOpen, initialPost]);
 
+  // Load saved token on mount
+  useEffect(() => {
     const savedToken = localStorage.getItem(STORAGE_KEY_GITHUB_TOKEN);
     if (savedToken) setGithubToken(savedToken);
   }, []);
 
-  // Autosave draft on change
+  // Autosave draft on change (only when creating a new draft)
   useEffect(() => {
+    if (editingPostId) return; // Do not overwrite new draft buffer when editing existing post
     if (!title && !content) return;
     const timeout = setTimeout(() => {
-      const draftObj = { title, slug, category, tagsInput, summary, content };
+      const draftObj = { title, slug, category, status, scheduledDate, tagsInput, summary, content };
       localStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(draftObj));
     }, 600);
     return () => clearTimeout(timeout);
-  }, [title, slug, category, tagsInput, summary, content]);
+  }, [title, slug, category, status, scheduledDate, tagsInput, summary, content, editingPostId]);
+
+  // Load an article into the editor
+  const loadArticleIntoEditor = (article) => {
+    setEditingPostId(article.id);
+    setTitle(article.title || '');
+    setSlug(article.slug || article.id || '');
+    setCategory(article.category || 'OpenShift & K8s');
+    setStatus(article.status || 'published');
+    setScheduledDate(article.scheduledDate || '');
+    setTagsInput(Array.isArray(article.tags) ? article.tags.join(', ') : (article.tags || ''));
+    setSummary(article.summary || '');
+    setContent(article.content || INITIAL_TEMPLATE);
+    setStatusMessage(`Loaded: "${article.title}"`);
+    setActiveSubTab('editor');
+  };
+
+  // Reset editor to clean new post
+  const handleResetToNew = () => {
+    sound.playBeep(450, 0.04);
+    setEditingPostId(null);
+    setTitle('');
+    setSlug('');
+    setCategory('OpenShift & K8s');
+    setStatus('published');
+    setScheduledDate('');
+    setTagsInput('OpenShift, Kubernetes, Production');
+    setSummary('');
+    setContent(INITIAL_TEMPLATE);
+    setStatusMessage('Cleared editor: ready for new dispatch.');
+    setActiveSubTab('editor');
+  };
 
   // Handle password login verification
   const handleVerifyPassword = async (e) => {
@@ -123,6 +180,7 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
         setIsAuthenticated(true);
         setAuthError('');
         setAuthPassword('');
+        reloadManagerArticles();
       } else {
         sound.playBeep(220, 0.15); // Buzz error sound
         setAuthError('ACCESS DENIED: Invalid operator key.');
@@ -159,13 +217,13 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
     sound.playBeep(450, 0.05);
     sessionStorage.removeItem(SESSION_AUTH_KEY);
     setIsAuthenticated(false);
-    setStatusMessage('Logged out of Dispatch Studio.');
+    setStatusMessage('Logged out of Publishing Studio.');
   };
 
   // Auto-slugify when title changes
   const handleTitleChange = (val) => {
     setTitle(val);
-    if (!slug || slug === title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')) {
+    if (!editingPostId && (!slug || slug === title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))) {
       const generated = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       setSlug(generated);
     }
@@ -177,41 +235,23 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
     return `${minutes} min read`;
   };
 
-  const buildMarkdownPayload = () => {
-    const today = new Date().toISOString().split('T')[0];
+  // Assemble full article object
+  const buildCurrentArticleObject = (overrideStatus = null) => {
     const tagsArray = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-    const frontmatter = [
-      '---',
-      `title: "${title || 'Untitled Field Log'}"`,
-      `slug: "${slug || 'untitled-post'}"`,
-      `date: "${today}"`,
-      `category: "${category}"`,
-      `readTime: "${calculatedReadTime()}"`,
-      `tags: [${tagsArray.map(t => `"${t}"`).join(', ')}]`,
-      `summary: "${summary || 'Technical field log.'}"`,
-      '---',
-      '',
-      content
-    ].join('\n');
-    return frontmatter;
-  };
+    const postSlug = slug.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `post-${Date.now()}`;
+    const postId = editingPostId || postSlug;
+    const finalStatus = overrideStatus || status;
 
-  // Instant Publish to local browser state
-  const handlePublishLocal = () => {
-    if (!title.trim()) {
-      setStatusMessage('Error: Title is required before publishing.');
-      return;
-    }
-
-    sound.playDeploySuccess();
-    const tagsArray = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-    const newArticle = {
-      id: slug || `post-${Date.now()}`,
-      title: title.trim(),
-      summary: summary.trim() || 'Technical dispatch.',
+    return {
+      id: postId,
+      slug: postSlug,
+      title: title.trim() || 'Untitled Field Log',
+      summary: summary.trim() || 'Technical field log dispatch.',
       category,
       date: new Date().toISOString().split('T')[0],
       readTime: calculatedReadTime(),
+      status: finalStatus,
+      scheduledDate: finalStatus === 'scheduled' ? scheduledDate : null,
       tags: tagsArray.length > 0 ? tagsArray : ['DevOps', 'Platform'],
       highlights: [
         'Battlefield-tested production insights',
@@ -219,28 +259,64 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
       ],
       content
     };
+  };
 
-    // Save into localStorage custom posts list
-    const existing = JSON.parse(localStorage.getItem('portfolio-custom-posts') || '[]');
-    const updated = [newArticle, ...existing.filter(p => p.id !== newArticle.id)];
-    localStorage.setItem('portfolio-custom-posts', JSON.stringify(updated));
-
-    if (onPostPublished) {
-      onPostPublished(newArticle);
+  // Save / Publish locally to browser state
+  const handleSaveArticle = (targetStatus = 'published') => {
+    if (!title.trim()) {
+      setStatusMessage('Error: Title is required before publishing.');
+      return;
     }
 
-    setStatusMessage('SUCCESS: Article published live! Ready for sharing.');
+    sound.playDeploySuccess();
+    const article = buildCurrentArticleObject(targetStatus);
+    saveCustomArticle(article);
+    reloadManagerArticles();
+
+    if (onPostPublished) {
+      onPostPublished(article);
+    }
+
+    setStatusMessage(`SUCCESS: Post saved as [${targetStatus.toUpperCase()}]!`);
     setTimeout(() => {
       onClose();
-    }, 1200);
+    }, 1000);
+  };
+
+  // Delete article from manager
+  const handleDeleteArticle = (id) => {
+    sound.playBeep(300, 0.1);
+    deleteCustomArticle(id);
+    reloadManagerArticles();
+    setDeleteConfirmId(null);
+    setStatusMessage('Article removed from local posts.');
+    if (editingPostId === id) {
+      handleResetToNew();
+    }
+  };
+
+  // Duplicate an article
+  const handleDuplicateArticle = (article) => {
+    sound.playKey();
+    const clone = {
+      ...article,
+      id: `${article.slug}-copy-${Date.now().toString().slice(-4)}`,
+      slug: `${article.slug}-copy`,
+      title: `${article.title} (Copy)`,
+      status: 'draft'
+    };
+    loadArticleIntoEditor(clone);
+    setEditingPostId(null); // Save as new
+    setStatusMessage(`Duplicated "${article.title}" as draft.`);
   };
 
   // Download .md file directly to mobile phone or laptop
   const handleDownloadMd = () => {
     sound.playBeep(700, 0.05);
-    const md = buildMarkdownPayload();
+    const article = buildCurrentArticleObject();
+    const md = buildMarkdownPayload(article);
     const today = new Date().toISOString().split('T')[0];
-    const filename = `${today}-${slug || 'post'}.md`;
+    const filename = `${today}-${article.slug}.md`;
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -255,13 +331,14 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
     setStatusMessage(`Saved ${filename} to your downloads.`);
   };
 
-  // Copy raw markdown for LinkedIn Articles or Git commit
+  // Copy raw markdown
   const handleCopyMarkdown = () => {
     sound.playKey();
-    const md = buildMarkdownPayload();
+    const article = buildCurrentArticleObject();
+    const md = buildMarkdownPayload(article);
     navigator.clipboard?.writeText(md);
     setCopied(true);
-    setStatusMessage('Markdown copied to clipboard!');
+    setStatusMessage('Markdown with YAML frontmatter copied!');
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -284,9 +361,11 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
 
     try {
       localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
+      const article = buildCurrentArticleObject('published');
       const today = new Date().toISOString().split('T')[0];
-      const filename = `src/content/posts/${today}-${slug}.md`;
-      const contentBase64 = btoa(unescape(encodeURIComponent(buildMarkdownPayload())));
+      const filename = `src/content/posts/${today}-${article.slug}.md`;
+      const mdPayload = buildMarkdownPayload(article);
+      const contentBase64 = btoa(unescape(encodeURIComponent(mdPayload)));
 
       // Check if file exists first to get sha for update
       let sha = null;
@@ -309,7 +388,7 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: `content(blog): publish "${title}" via mobile studio`,
+          message: `content(blog): publish "${article.title}" via mobile publishing studio`,
           content: contentBase64,
           sha: sha || undefined
         })
@@ -322,7 +401,7 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
 
       sound.playDeploySuccess();
       setStatusMessage(`COMMITTED TO GITHUB: ${filename}`);
-      handlePublishLocal();
+      handleSaveArticle('published');
     } catch (err) {
       console.error(err);
       setStatusMessage(`GitHub Commit Failed: ${err.message}`);
@@ -351,15 +430,15 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
               <Lock className="w-4 h-4 text-cyber-cyan" />
             )}
             <span className="text-xs sm:text-sm font-bold text-white tracking-wider">
-              DISPATCH STUDIO // ON-THE-GO CMS
+              PUBLISHING STUDIO // ON-THE-GO CMS
             </span>
             {isAuthenticated ? (
               <span className="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded bg-cyber-emerald/10 border border-cyber-emerald/30 text-cyber-emerald font-bold">
-                AUTHENTICATED
+                OPERATOR AUTHENTICATED
               </span>
             ) : (
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold">
-                ENCRYPTED GATE
+                SECURITY GATE
               </span>
             )}
           </div>
@@ -400,39 +479,42 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
               <Lock className="w-5 h-5 text-cyber-emerald absolute -bottom-1 -right-1 bg-cyber-bg rounded-full p-0.5 border border-cyber-border" />
             </div>
 
-            <div className="space-y-1.5 max-w-md">
-              <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                OPERATOR IDENTITY VERIFICATION
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Publishing access is restricted exclusively to Stefan Bakurdzhiev. Enter your master operator key to unlock the Dispatch Studio.
+            <div className="space-y-2 max-w-md">
+              <div className="text-xs text-cyber-cyan font-bold tracking-widest uppercase">
+                SECURITY VERIFICATION REQUIRED
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-white">
+                Stefan Bakurdzhiev Dispatch Studio
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                This publishing console commits directly to production. Enter your operator access key to unlock post authoring, editing, and publishing controls.
               </p>
             </div>
 
-            <form onSubmit={handleVerifyPassword} className="w-full max-w-sm space-y-3">
+            <form onSubmit={handleVerifyPassword} className="w-full max-w-sm space-y-4">
               <div className="relative">
                 <input
-                  type={showAuthPassword ? "text" : "password"}
-                  autoFocus
+                  type={showAuthPassword ? 'text' : 'password'}
                   placeholder="Enter Operator Security Key..."
                   value={authPassword}
                   onChange={(e) => {
                     setAuthPassword(e.target.value);
                     if (authError) setAuthError('');
                   }}
-                  className="w-full bg-[#02050b] border border-cyber-border focus:border-cyber-cyan rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none pr-10 tracking-wider font-mono shadow-inner"
+                  autoFocus
+                  className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none pr-10 font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowAuthPassword(!showAuthPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
                   {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
               {authError && (
-                <div className="flex items-center gap-1.5 text-xs text-red-400 justify-center animate-shake">
+                <div className="text-xs text-red-400 flex items-center justify-center gap-1.5 bg-red-500/10 border border-red-500/30 p-2 rounded">
                   <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                   <span>{authError}</span>
                 </div>
@@ -440,58 +522,64 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-glow-cyan hover:opacity-95 transition-all cursor-pointer"
+                className="w-full py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-glow-cyan cursor-pointer"
               >
                 <Unlock className="w-4 h-4 fill-black" />
-                <span>AUTHENTICATE &amp; UNLOCK</span>
+                <span>AUTHENTICATE &amp; UNLOCK STUDIO</span>
               </button>
-            </form>
 
-            <div className="text-[10px] text-cyber-muted border border-cyber-border/60 bg-cyber-panel/30 p-2.5 rounded max-w-sm">
-              <span className="text-slate-400">DEFAULT KEY: </span>
-              <code className="text-cyber-cyan font-bold">stefan2026</code>
-              <div className="text-[9px] text-slate-500 mt-0.5">
-                (You can update this key anytime inside Security Settings once logged in).
+              <div className="text-[10px] text-slate-500 text-center">
+                Default Master Key: <code className="text-cyber-cyan">stefan2026</code> • Can be changed inside Studio
               </div>
-            </div>
+            </form>
           </div>
         ) : (
           /* ============================================================== */
-          /* CASE 2: AUTHENTICATED -> FULL CMS PUBLISHING STUDIO           */
+          /* CASE 2: AUTHENTICATED -> FULL PUBLISHING STUDIO & POST MANAGER */
           /* ============================================================== */
           <>
-            {/* Sub-tabs Navigation */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-cyber-panel/60 border-b border-cyber-border text-xs shrink-0">
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            {/* Sub Tabs Navigation */}
+            <div className="flex items-center justify-between px-4 py-2 bg-cyber-surface border-b border-cyber-border text-xs shrink-0 overflow-x-auto no-scrollbar gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
-                  onClick={() => { sound.playKey(); setActiveSubTab('editor'); }}
-                  className={`px-3 py-1 rounded text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  onClick={() => {
+                    sound.playKey();
+                    setActiveSubTab('manager');
+                    reloadManagerArticles();
+                  }}
+                  className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    activeSubTab === 'manager'
+                      ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5 text-cyber-cyan" />
+                  <span>ALL POSTS ({managerArticles.length})</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    sound.playKey();
+                    setActiveSubTab('editor');
+                  }}
+                  className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors cursor-pointer ${
                     activeSubTab === 'editor'
-                      ? 'bg-cyber-cyan text-cyber-bg font-bold'
+                      ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>CONTENT</span>
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>{editingPostId ? 'EDITING POST' : 'DRAFT EDITOR'}</span>
                 </button>
 
                 <button
-                  onClick={() => { sound.playKey(); setActiveSubTab('meta'); }}
-                  className={`px-3 py-1 rounded text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                    activeSubTab === 'meta'
-                      ? 'bg-cyber-cyan text-cyber-bg font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Tag className="w-3.5 h-3.5" />
-                  <span>METADATA &amp; SEO</span>
-                </button>
-
-                <button
-                  onClick={() => { sound.playKey(); setActiveSubTab('preview'); }}
-                  className={`px-3 py-1 rounded text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  onClick={() => {
+                    sound.playKey();
+                    setActiveSubTab('preview');
+                  }}
+                  className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors cursor-pointer ${
                     activeSubTab === 'preview'
-                      ? 'bg-cyber-emerald text-cyber-bg font-bold'
+                      ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -500,10 +588,13 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
                 </button>
 
                 <button
-                  onClick={() => { sound.playKey(); setActiveSubTab('security'); }}
-                  className={`px-3 py-1 rounded text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  onClick={() => {
+                    sound.playKey();
+                    setActiveSubTab('security');
+                  }}
+                  className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors cursor-pointer ${
                     activeSubTab === 'security'
-                      ? 'bg-purple-600 text-white font-bold'
+                      ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -512,305 +603,553 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished }) => {
                 </button>
               </div>
 
-              <span className="text-[11px] text-cyber-muted hidden sm:inline">
-                {calculatedReadTime()}
-              </span>
+              {/* Status Indicator */}
+              <div className="flex items-center gap-2 text-[11px] text-cyber-emerald shrink-0">
+                {statusMessage && (
+                  <span className="text-cyber-cyan font-mono animate-fadeIn hidden md:inline">
+                    {statusMessage}
+                  </span>
+                )}
+                <span className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border text-slate-300">
+                  {calculatedReadTime()}
+                </span>
+              </div>
             </div>
 
-            {/* Workspace Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
-              {/* Status Alert Banner */}
-              {statusMessage && (
-                <div className={`p-2.5 rounded text-xs border flex items-center justify-between ${
-                  statusMessage.startsWith('SUCCESS') || statusMessage.startsWith('COMMITTED')
-                    ? 'bg-cyber-emerald/10 border-cyber-emerald/40 text-cyber-emerald'
-                    : statusMessage.startsWith('Error')
-                    ? 'bg-red-500/10 border-red-500/40 text-red-300'
-                    : 'bg-cyber-panel border-cyber-cyan/30 text-cyber-cyan'
-                }`}>
-                  <span>{statusMessage}</span>
-                  <button onClick={() => setStatusMessage('')} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
+            {/* Modal Body */}
+            <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-4">
+
+              {/* -------------------------------------------------------- */}
+              {/* SUBTAB 1: POST MANAGER & LIFECYCLE                      */}
+              {/* -------------------------------------------------------- */}
+              {activeSubTab === 'manager' && (
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-cyber-border pb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-cyber-cyan" />
+                        <span>POST LIFECYCLE MANAGER</span>
+                      </h4>
+                      <p className="text-xs text-slate-400">
+                        View, edit, duplicate, and manage all articles and published field logs.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleResetToNew}
+                        className="px-3 py-1.5 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-glow-subtle"
+                      >
+                        <Plus className="w-3.5 h-3.5 fill-black" />
+                        <span>NEW DISPATCH</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Status filter bar */}
+                  <div className="flex items-center gap-2 text-xs">
+                    {['ALL', 'PUBLISHED', 'DRAFT', 'SCHEDULED'].map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setManagerFilter(f)}
+                        className={`px-2.5 py-1 rounded transition-colors ${
+                          managerFilter === f
+                            ? 'bg-cyber-panel text-cyber-cyan border border-cyber-cyan/50 font-bold'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Articles Table */}
+                  <div className="space-y-2">
+                    {managerArticles
+                      .filter(a => {
+                        if (managerFilter === 'ALL') return true;
+                        if (managerFilter === 'PUBLISHED') return a.status === 'published' || !a.status;
+                        if (managerFilter === 'DRAFT') return a.status === 'draft';
+                        if (managerFilter === 'SCHEDULED') return a.status === 'scheduled';
+                        return true;
+                      })
+                      .map(article => (
+                        <div
+                          key={article.id}
+                          className="p-3 bg-cyber-bg border border-cyber-border hover:border-cyber-cyan/60 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition-colors"
+                        >
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap text-xs">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-cyber-panel border border-cyber-cyan/30 text-cyber-cyan font-bold">
+                                {article.category}
+                              </span>
+
+                              {article.status === 'draft' ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold">
+                                  DRAFT
+                                </span>
+                              ) : article.status === 'scheduled' ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold">
+                                  SCHEDULED: {article.scheduledDate || 'TBD'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyber-emerald/10 border border-cyber-emerald/30 text-cyber-emerald font-bold">
+                                  PUBLISHED
+                                </span>
+                              )}
+
+                              <span className="text-[11px] text-slate-400">{article.date}</span>
+                            </div>
+
+                            <div className="font-bold text-white text-xs sm:text-sm truncate">
+                              {article.title}
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate">
+                              {article.summary}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => {
+                                sound.playKey();
+                                loadArticleIntoEditor(article);
+                              }}
+                              className="px-2.5 py-1 rounded bg-cyber-panel border border-cyber-cyan/50 text-cyber-cyan hover:bg-cyber-cyan hover:text-black transition-all text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              title="Edit in CMS Editor"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>EDIT</span>
+                            </button>
+
+                            {/* Duplicate Button */}
+                            <button
+                              onClick={() => handleDuplicateArticle(article)}
+                              className="px-2.5 py-1 rounded bg-cyber-surface border border-cyber-border hover:border-slate-400 text-slate-300 hover:text-white transition-colors text-xs flex items-center gap-1 cursor-pointer"
+                              title="Duplicate as new draft"
+                            >
+                              <Copy className="w-3 h-3 text-slate-400" />
+                              <span className="hidden sm:inline">CLONE</span>
+                            </button>
+
+                            {/* Delete Button (Only for custom/localStorage posts) */}
+                            {article.isCustom && (
+                              deleteConfirmId === article.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleDeleteArticle(article.id)}
+                                    className="px-2 py-1 rounded bg-red-600 text-white text-[11px] font-bold"
+                                  >
+                                    CONFIRM
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirmId(null)}
+                                    className="px-2 py-1 rounded bg-cyber-surface border border-cyber-border text-slate-400 text-[11px]"
+                                  >
+                                    CANCEL
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setDeleteConfirmId(article.id)}
+                                  className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  title="Delete custom post"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               )}
 
-              {/* TAB 1: CONTENT EDITOR */}
+              {/* -------------------------------------------------------- */}
+              {/* SUBTAB 2: EDITOR TAB                                    */}
+              {/* -------------------------------------------------------- */}
               {activeSubTab === 'editor' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                      ARTICLE TITLE
+                <div className="space-y-4 animate-fadeIn">
+                  {/* Active Edit Status Banner */}
+                  {editingPostId && (
+                    <div className="flex items-center justify-between p-2.5 bg-cyber-cyan/10 border border-cyber-cyan/40 rounded-lg text-xs text-cyber-cyan">
+                      <div className="flex items-center gap-2">
+                        <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                        <span>Editing Post: <strong>{title || editingPostId}</strong></span>
+                      </div>
+                      <button
+                        onClick={handleResetToNew}
+                        className="text-[11px] underline hover:text-white flex items-center gap-1 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Switch to New Post</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Title & Slug */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="text-slate-400 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                        <FileText className="w-3 h-3 text-cyber-cyan" />
+                        <span>Dispatch Title *</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Zero-Downtime OpenShift 4.14 Upgrades in Banking"
+                        value={title}
+                        onChange={(e) => handleTitleChange(e.target.value)}
+                        className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-white text-xs placeholder-slate-600 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-400 uppercase tracking-wider text-[11px]">
+                        URL Slug *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. openshift-zero-downtime"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value)}
+                        className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-cyber-cyan text-xs placeholder-slate-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category, Status & Scheduled Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-slate-400 uppercase tracking-wider text-[11px]">
+                        Category
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-white text-xs focus:outline-none cursor-pointer"
+                      >
+                        <option value="OpenShift & K8s">OpenShift &amp; K8s</option>
+                        <option value="GitOps & CI/CD">GitOps &amp; CI/CD</option>
+                        <option value="Security">Security / DevSecOps</option>
+                        <option value="Platform Leadership">Platform Leadership</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-400 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-cyber-emerald" />
+                        <span>Lifecycle Status</span>
+                      </label>
+                      <select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-cyber-emerald font-bold text-xs focus:outline-none cursor-pointer"
+                      >
+                        <option value="published">Published (Live Production)</option>
+                        <option value="draft">Draft (Work in Progress)</option>
+                        <option value="scheduled">Scheduled Release</option>
+                      </select>
+                    </div>
+
+                    {status === 'scheduled' ? (
+                      <div className="space-y-1 animate-fadeIn">
+                        <label className="text-cyan-400 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-cyan-400" />
+                          <span>Release Date</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={scheduledDate}
+                          onChange={(e) => setScheduledDate(e.target.value)}
+                          className="w-full bg-cyber-bg border border-cyan-500/60 rounded p-2 text-white text-xs focus:outline-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <label className="text-slate-400 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                          <Tag className="w-3 h-3 text-cyber-cyan" />
+                          <span>Tags (Comma-separated)</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="OpenShift, Kubernetes, ArgoCD"
+                          value={tagsInput}
+                          onChange={(e) => setTagsInput(e.target.value)}
+                          className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-white text-xs placeholder-slate-600 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="space-y-1 text-xs">
+                    <label className="text-slate-400 uppercase tracking-wider text-[11px]">
+                      Tactical Summary (Used for card excerpt &amp; SEO description)
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Zero-Downtime OpenShift 4.14 In-Place Cluster Upgrades"
-                      value={title}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-bold"
+                    <textarea
+                      rows={2}
+                      placeholder="Battlefield-tested playbook for sequencing MachineConfigPool pauses..."
+                      value={summary}
+                      onChange={(e) => setSummary(e.target.value)}
+                      className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded p-2 text-white text-xs placeholder-slate-600 focus:outline-none resize-none leading-relaxed"
                     />
                   </div>
 
-                  {/* Quick Format Snippet Bar */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
-                    <span className="text-[10px] text-cyber-muted uppercase mr-1">SNIPPETS:</span>
+                  {/* Snippet Toolbar */}
+                  <div className="flex items-center gap-1 flex-wrap text-[11px] bg-cyber-bg/80 p-2 rounded border border-cyber-border">
+                    <span className="text-slate-500 text-[10px] font-bold uppercase mr-1">SNIPPETS:</span>
                     <button
                       type="button"
-                      onClick={() => insertSnippet('### New Section Header')}
-                      className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white cursor-pointer"
+                      onClick={() => insertSnippet('### Heading Title')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-cyber-cyan border border-cyber-border/70 cursor-pointer"
                     >
-                      ### Header
+                      # H3
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertSnippet('```bash\n# Terminal command\noc get nodes -o wide\n```')}
-                      className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white cursor-pointer"
+                      onClick={() => insertSnippet('```bash\n# command example\noc get nodes\n```')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-cyber-emerald border border-cyber-border/70 cursor-pointer"
                     >
-                      ```bash
+                      &lt;/&gt; Code
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertSnippet('```yaml\napiVersion: v1\nkind: Pod\n```')}
-                      className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white cursor-pointer"
+                      onClick={() => insertSnippet('> [!NOTE]\n> Operational context note.')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-cyber-cyan border border-cyber-border/70 cursor-pointer"
                     >
-                      ```yaml
+                      [!NOTE]
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertSnippet('1. Step description\n2. Next step')}
-                      className="px-2 py-0.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white cursor-pointer"
+                      onClick={() => insertSnippet('> [!TIP]\n> Battlefield-tested pro-tip.')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-emerald-300 border border-cyber-border/70 cursor-pointer"
+                    >
+                      [!TIP]
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSnippet('> [!WARNING]\n> Production risk warning.')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-amber-300 border border-cyber-border/70 cursor-pointer"
+                    >
+                      [!WARNING]
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSnippet('> [!IMPORTANT]\n> Mandatory SLA requirement.')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-purple-300 border border-cyber-border/70 cursor-pointer"
+                    >
+                      [!IMPORTANT]
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSnippet('| Component | Status | SLA |\n| :--- | :--- | :--- |\n| Etcd | Nominal | 99.99% |')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-slate-300 border border-cyber-border/70 cursor-pointer"
+                    >
+                      ▦ Table
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSnippet('1. Step item\n2. Next step item')}
+                      className="px-2 py-0.5 rounded bg-cyber-surface hover:bg-cyber-panel text-slate-300 border border-cyber-border/70 cursor-pointer"
                     >
                       1. List
                     </button>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                      MARKDOWN BODY CONTENT
+                  {/* Markdown Content Textarea */}
+                  <div className="space-y-1 text-xs">
+                    <label className="text-slate-400 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                      <span>Article Markdown Body *</span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        Words: {(content + summary).trim().split(/\s+/).filter(Boolean).length}
+                      </span>
                     </label>
                     <textarea
-                      rows={14}
+                      rows={12}
+                      placeholder="Write your article in markdown..."
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder="Write in standard Markdown. Use ```bash or ```yaml for syntax-highlighted code blocks..."
-                      className="w-full bg-[#02050b] border border-cyber-border rounded p-3 text-xs sm:text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-mono leading-relaxed resize-y min-h-[260px]"
+                      className="w-full bg-[#02050b] border border-cyber-border focus:border-cyber-cyan rounded p-3 text-white text-xs font-mono placeholder-slate-700 focus:outline-none leading-relaxed"
                     />
                   </div>
                 </div>
               )}
 
-              {/* TAB 2: METADATA & SEO */}
-              {activeSubTab === 'meta' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                        URL SLUG (PERMALINK)
-                      </label>
-                      <div className="flex items-center gap-1 bg-cyber-bg border border-cyber-border rounded px-2.5 py-1.5 text-xs">
-                        <span className="text-slate-500">sbakurdzhiev.com/blog/</span>
-                        <input
-                          type="text"
-                          value={slug}
-                          onChange={(e) => setSlug(e.target.value)}
-                          placeholder="openshift-cluster-upgrade"
-                          className="w-full bg-transparent text-white focus:outline-none font-mono"
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 mt-0.5 block">
-                        Canonical link for LinkedIn, X &amp; Reddit link previews.
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                        CATEGORY
-                      </label>
-                      <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-cyber-cyan font-mono"
-                      >
-                        <option value="OpenShift & K8s">OpenShift &amp; K8s</option>
-                        <option value="GitOps & CI/CD">GitOps &amp; CI/CD</option>
-                        <option value="Security">Security</option>
-                        <option value="Platform Leadership">Platform Leadership</option>
-                        <option value="Architecture">Architecture</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                      TAGS (COMMA SEPARATED)
-                    </label>
-                    <input
-                      type="text"
-                      value={tagsInput}
-                      onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="OpenShift, Kubernetes, High Availability, Banking SLA"
-                      className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-cyber-cyan font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] uppercase text-cyber-muted tracking-wider block mb-1">
-                      EXECUTIVE SUMMARY / SOCIAL PREVIEW SNIPPET
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={summary}
-                      onChange={(e) => setSummary(e.target.value)}
-                      placeholder="Appears in social preview cards across LinkedIn, X, and Reddit. Max 180 characters recommended."
-                      className="w-full bg-cyber-bg border border-cyber-border rounded p-3 text-xs text-slate-200 focus:outline-none focus:border-cyber-cyan font-mono resize-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: LIVE PREVIEW */}
+              {/* -------------------------------------------------------- */}
+              {/* SUBTAB 3: PREVIEW TAB                                   */}
+              {/* -------------------------------------------------------- */}
               {activeSubTab === 'preview' && (
-                <div className="border border-cyber-border bg-cyber-bg rounded-lg p-4 space-y-4">
-                  <div className="space-y-1 border-b border-cyber-border pb-3">
-                    <div className="flex items-center gap-2 text-[10px]">
-                      <span className="px-2 py-0.5 rounded bg-cyber-cyan/15 border border-cyber-cyan/40 text-cyber-cyan font-bold">
-                        {category}
-                      </span>
-                      <span className="text-slate-400">{calculatedReadTime()}</span>
-                    </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">
-                      {title || 'Untitled Field Log'}
-                    </h2>
-                    {summary && (
-                      <p className="text-xs text-slate-300 italic border-l-2 border-cyber-cyan pl-2 py-0.5">
-                        "{summary}"
-                      </p>
-                    )}
+                <div className="p-4 bg-[#02050b] border border-cyber-border rounded-lg space-y-4 animate-fadeIn">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-0.5 rounded bg-cyber-panel text-cyber-cyan border border-cyber-cyan/30 text-[10px] font-bold">
+                      {category}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-cyber-emerald/10 text-cyber-emerald border border-cyber-emerald/30 text-[10px] font-bold">
+                      STATUS: {status.toUpperCase()}
+                    </span>
+                    <span className="text-slate-400 text-[11px]">{calculatedReadTime()}</span>
                   </div>
 
-                  <div className="text-xs text-slate-200 space-y-3 font-mono leading-relaxed">
-                    {content.split('\n\n').map((block, idx) => {
-                      const trimmed = block.trim();
-                      if (!trimmed) return null;
-                      if (trimmed.startsWith('### ')) {
-                        return <h3 key={idx} className="text-sm font-bold text-cyber-cyan pt-2">{trimmed.replace('### ', '# ')}</h3>;
-                      }
-                      if (trimmed.startsWith('```')) {
-                        return (
-                          <pre key={idx} className="bg-[#02050b] p-3 rounded border border-cyber-border text-emerald-400 overflow-x-auto text-[11px]">
-                            {trimmed.replace(/```[a-z]*\n?/g, '')}
-                          </pre>
-                        );
-                      }
-                      return <p key={idx}>{trimmed}</p>;
-                    })}
+                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
+                    {title || 'Untitled Field Log'}
+                  </h2>
+
+                  {summary && (
+                    <div className="p-3 rounded bg-cyber-bg border-l-4 border-cyber-cyan text-xs text-slate-300 leading-relaxed">
+                      {summary}
+                    </div>
+                  )}
+
+                  <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap font-mono pt-2 border-t border-cyber-border/60">
+                    {content}
                   </div>
                 </div>
               )}
 
-              {/* TAB 4: SECURITY & CREDENTIALS */}
+              {/* -------------------------------------------------------- */}
+              {/* SUBTAB 4: SECURITY TAB                                  */}
+              {/* -------------------------------------------------------- */}
               {activeSubTab === 'security' && (
-                <div className="space-y-6">
-                  {/* Change Password Form */}
-                  <div className="bg-cyber-panel/50 border border-cyber-border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-white font-bold text-xs">
-                      <Lock className="w-4 h-4 text-cyber-cyan" />
-                      <span>CHANGE OPERATOR MASTER PASSWORD</span>
+                <div className="space-y-6 animate-fadeIn">
+                  {/* Master Password Change */}
+                  <div className="bg-cyber-bg p-4 sm:p-5 border border-cyber-border rounded-lg space-y-3">
+                    <div className="flex items-center gap-2 text-white font-bold text-xs uppercase tracking-wider">
+                      <Key className="w-4 h-4 text-cyber-cyan" />
+                      <span>Update Operator Security Access Key</span>
                     </div>
-                    <p className="text-xs text-slate-300">
-                      Update the key required to unlock this Dispatch Studio on any mobile device or browser.
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      This key is hashed using SHA-256 and stored securely in your browser to restrict publishing access to you.
                     </p>
 
-                    <form onSubmit={handleChangePassword} className="space-y-2.5 max-w-sm pt-1">
+                    <form onSubmit={handleChangePassword} className="flex flex-col sm:flex-row gap-2 max-w-md">
                       <input
                         type="password"
-                        placeholder="Enter New Master Password..."
+                        placeholder="Enter new master passphrase..."
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-cyber-cyan font-mono"
+                        className="flex-1 bg-cyber-surface border border-cyber-border rounded p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan"
                       />
                       <button
                         type="submit"
-                        className="px-3.5 py-1.5 rounded bg-cyber-cyan text-cyber-bg font-bold text-xs hover:bg-cyber-cyan/90 transition-colors cursor-pointer"
+                        className="px-4 py-2 rounded bg-cyber-panel border border-cyber-cyan/50 text-cyber-cyan hover:bg-cyber-cyan hover:text-black font-bold text-xs transition-colors cursor-pointer"
                       >
-                        SAVE NEW MASTER KEY
+                        SAVE NEW KEY
                       </button>
                     </form>
+
+                    {passwordChangeSuccess && (
+                      <div className="text-xs text-cyber-emerald flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Master key successfully updated and hashed.</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* GitHub PAT Configuration */}
-                  <div className="bg-cyber-panel/50 border border-cyber-border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-white font-bold text-xs">
-                      <Key className="w-4 h-4 text-cyber-emerald" />
-                      <span>GITHUB PERSONAL ACCESS TOKEN (DIRECT PHONE PUSH)</span>
+                  {/* GitHub Personal Access Token */}
+                  <div className="bg-cyber-bg p-4 sm:p-5 border border-cyber-border rounded-lg space-y-3">
+                    <div className="flex items-center gap-2 text-white font-bold text-xs uppercase tracking-wider">
+                      <Terminal className="w-4 h-4 text-cyber-emerald" />
+                      <span>Direct GitHub API Publisher (For Phone Commits)</span>
                     </div>
-                    <p className="text-xs text-slate-300">
-                      Allows committing markdown posts directly to <code>github.com/sbakurdzhiev/portfolio</code> from your phone without terminal access.
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Store your fine-grained GitHub Personal Access Token (`ghp_...` with `Contents: Read and write`) to push new `.md` field log commits straight from mobile browsers to `sbakurdzhiev/portfolio`.
                     </p>
-                    <div className="space-y-2 max-w-md pt-1">
+
+                    <div className="flex flex-col sm:flex-row gap-2 max-w-lg">
                       <input
                         type="password"
-                        placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx"
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                         value={githubToken}
                         onChange={(e) => {
                           setGithubToken(e.target.value);
                           localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, e.target.value);
                         }}
-                        className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-cyber-cyan font-mono"
+                        className="flex-1 bg-cyber-surface border border-cyber-border rounded p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-mono"
                       />
-                      <p className="text-[10px] text-slate-400">
-                        Token is saved securely in your browser's private local storage.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
+                          setStatusMessage('GitHub Token saved locally.');
+                          sound.playDeploySuccess();
+                        }}
+                        className="px-4 py-2 rounded bg-cyber-emerald/15 border border-cyber-emerald/50 text-cyber-emerald hover:bg-cyber-emerald hover:text-black font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        SAVE TOKEN
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
-
             </div>
 
-            {/* Footer Actions */}
-            <div className="p-3 bg-cyber-bg border-t border-cyber-border flex flex-wrap items-center justify-between gap-2 shrink-0 text-xs">
-              <div className="flex items-center gap-2">
+            {/* Modal Footer Controls */}
+            <div className="p-3 sm:p-4 bg-cyber-bg border-t border-cyber-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
+                  type="button"
                   onClick={handleCopyMarkdown}
-                  className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded bg-cyber-surface border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors text-xs flex items-center gap-1.5 cursor-pointer"
+                  title="Copy formatted markdown with frontmatter"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-cyber-emerald" /> : <Copy className="w-3.5 h-3.5 text-cyber-cyan" />}
-                  <span className="hidden sm:inline">COPY MARKDOWN</span>
+                  {copied ? <Check className="w-3.5 h-3.5 text-cyber-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'COPIED!' : 'COPY MD'}</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleDownloadMd}
-                  className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border hover:border-cyber-cyan text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded bg-cyber-surface border border-cyber-border hover:border-cyber-emerald text-slate-300 hover:text-white transition-colors text-xs flex items-center gap-1.5 cursor-pointer"
+                  title="Download .md file directly"
                 >
                   <Download className="w-3.5 h-3.5 text-cyber-emerald" />
-                  <span className="hidden sm:inline">DOWNLOAD .MD</span>
+                  <span>DOWNLOAD .MD</span>
                 </button>
               </div>
 
+              {/* Primary Action Buttons */}
               <div className="flex items-center gap-2">
+                {/* Save Draft */}
+                <button
+                  type="button"
+                  onClick={() => handleSaveArticle('draft')}
+                  className="px-3 py-2 rounded bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Save as draft without setting live"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>SAVE DRAFT</span>
+                </button>
+
+                {/* Publish Live */}
+                <button
+                  type="button"
+                  onClick={() => handleSaveArticle(status === 'scheduled' ? 'scheduled' : 'published')}
+                  className="px-4 py-2 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs flex items-center gap-1.5 shadow-glow-cyan hover:opacity-90 transition-all cursor-pointer"
+                  title="Publish immediately to the site"
+                >
+                  <Upload className="w-3.5 h-3.5 fill-black" />
+                  <span>{status === 'scheduled' ? 'SCHEDULE' : 'PUBLISH LIVE'}</span>
+                </button>
+
+                {/* Commit to GitHub API (If token present) */}
                 {githubToken && (
                   <button
+                    type="button"
                     onClick={handleDirectGitHubCommit}
                     disabled={isCommitting}
-                    className="px-3.5 py-1.5 rounded bg-purple-600/20 border border-purple-500/60 text-purple-300 hover:bg-purple-600 hover:text-white font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-2 rounded bg-cyber-panel border border-cyber-cyan text-cyber-cyan hover:bg-cyber-cyan hover:text-black font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                    title="Commit directly to GitHub repo from mobile"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>{isCommitting ? 'COMMITTING...' : 'COMMIT TO REPO'}</span>
+                    <span>{isCommitting ? 'PUSHING...' : 'GITHUB PUSH'}</span>
                   </button>
                 )}
-
-                <button
-                  onClick={handlePublishLocal}
-                  className="px-4 py-1.5 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold shadow-glow-cyan hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 fill-black" />
-                  <span>PUBLISH LIVE</span>
-                </button>
               </div>
             </div>
           </>
         )}
-
       </div>
     </div>
   );

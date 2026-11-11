@@ -25,8 +25,24 @@ export function App() {
   });
 
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [crtEnabled, setCrtEnabled] = useState(true);
+  const [crtEnabled, setCrtEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('portfolio-crt');
+      if (saved !== null) return saved === 'true';
+    }
+    return false; // CRT Off by default
+  });
   const [isCliOpen, setIsCliOpen] = useState(false);
+
+  const handleToggleCrt = () => {
+    setCrtEnabled(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('portfolio-crt', String(next));
+      }
+      return next;
+    });
+  };
 
   // Sync browser back/forward button
   useEffect(() => {
@@ -83,7 +99,7 @@ export function App() {
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
           crtEnabled={crtEnabled}
-          setCrtEnabled={setCrtEnabled}
+          setCrtEnabled={handleToggleCrt}
           onOpenCli={handleOpenCli}
         />
 

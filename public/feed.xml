@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Stefan Bakurdzhiev // Tactical Field Logs &amp; Architecture Journal</title>
+    <link>https://sbakurdzhiev.com/?tab=blog</link>
+    <description>Battlefield-tested production playbooks, post-mortems, and architectural blueprints on OpenShift 4.x, Kubernetes, ArgoCD GitOps, DevSecOps, and platform engineering leadership.</description>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 11 Nov 2026 13:00:00 GMT</lastBuildDate>
+    <atom:link href="https://sbakurdzhiev.com/feed.xml" rel="self" type="application/rss+xml" />
+    <managingEditor>stefan.bakurdzhiev@gmail.com (Stefan Bakurdzhiev)</managingEditor>
+    <webMaster>stefan.bakurdzhiev@gmail.com (Stefan Bakurdzhiev)</webMaster>
+    <copyright>Copyright 2026 Stefan Bakurdzhiev</copyright>
+    <category>DevOps</category>
+    <category>Kubernetes</category>
+    <category>OpenShift</category>
+    <category>Platform Engineering</category>
+
+    <item>
+      <title>Zero-Downtime OpenShift 4.14 In-Place Upgrades in Banking Environments</title>
+      <link>https://sbakurdzhiev.com/?tab=blog&amp;post=openshift-zero-downtime-upgrade</link>
+      <guid isPermaLink="true">https://sbakurdzhiev.com/?tab=blog&amp;post=openshift-zero-downtime-upgrade</guid>
+      <pubDate>Sun, 18 Oct 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stefan Bakurdzhiev</dc:creator>
+      <category>OpenShift &amp; K8s</category>
+      <description>A battlefield-tested playbook for sequencing MachineConfigPool pauses, etcd quorum snapshots, and worker node drain automation to maintain 99.99% SLA during major OCP version transitions.</description>
+    </item>
+
+    <item>
+      <title>Hardening Cloud Native Supply Chains: Trivy, Cosign &amp; Kyverno in CI/CD</title>
+      <link>https://sbakurdzhiev.com/?tab=blog&amp;post=supply-chain-security-trivy-kyverno-cosign</link>
+      <guid isPermaLink="true">https://sbakurdzhiev.com/?tab=blog&amp;post=supply-chain-security-trivy-kyverno-cosign</guid>
+      <pubDate>Tue, 04 Aug 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stefan Bakurdzhiev</dc:creator>
+      <category>Security</category>
+      <description>Building a zero-trust container delivery pipeline: automated CVE gating, cryptographic image attestation with Sigstore Cosign, and strict Kyverno admission controllers.</description>
+    </item>
+
+    <item>
+      <title>Multi-Cluster GitOps at Scale with ArgoCD ApplicationSets</title>
+      <link>https://sbakurdzhiev.com/?tab=blog&amp;post=gitops-at-scale-argocd-applicationsets</link>
+      <guid isPermaLink="true">https://sbakurdzhiev.com/?tab=blog&amp;post=gitops-at-scale-argocd-applicationsets</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stefan Bakurdzhiev</dc:creator>
+      <category>GitOps &amp; CI/CD</category>
+      <description>Architecting high-scale GitOps repositories, dynamic cluster generators, sync waves, and self-healing configurations across multi-region hybrid OpenShift and vanilla Kubernetes.</description>
+    </item>
+
+    <item>
+      <title>From Ticket Hell to Platform Engineering: Leading 8 DevOps Engineers</title>
+      <link>https://sbakurdzhiev.com/?tab=blog&amp;post=leading-8-engineers-platform-engineering</link>
+      <guid isPermaLink="true">https://sbakurdzhiev.com/?tab=blog&amp;post=leading-8-engineers-platform-engineering</guid>
+      <pubDate>Tue, 10 Mar 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stefan Bakurdzhiev</dc:creator>
+      <category>Platform Leadership</category>
+      <description>A transparent leadership reflection from DXC Bulgaria on transforming a reactive operations team into a high-impact platform engineering unit with self-service golden paths.</description>
+    </item>
+  </channel>
+</rss>
