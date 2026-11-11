@@ -95,7 +95,7 @@ export const FooterTelemetry = () => {
                   className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border text-slate-200 hover:text-white hover:border-cyber-cyan text-xs flex items-center gap-2 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-cyber-cyan" />
-                  <span>sbakurdzhiev.eu</span>
+                  <span>sbakurdzhiev.com</span>
                 </a>
               </div>
             </div>

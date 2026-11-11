@@ -66,7 +66,7 @@ const PIPELINE_STAGES = [
       '[ROLLOUT] Pod replica 1/3: [CONTAINER_CREATING] -> [RUNNING 1/1]',
       '[ROLLOUT] Pod replica 2/3: [CONTAINER_CREATING] -> [RUNNING 1/1]',
       '[ROLLOUT] Pod replica 3/3: [CONTAINER_CREATING] -> [RUNNING 1/1]',
-      '[SUCCESS] OpenShift Route live: https://sbakurdzhiev.eu [HTTP 200 OK]'
+      '[SUCCESS] OpenShift Route live: https://sbakurdzhiev.com [HTTP 200 OK]'
     ]
   }
 ];

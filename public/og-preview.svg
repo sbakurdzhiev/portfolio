@@ -73,6 +73,6 @@
   <!-- Bottom Terminal Status Bar -->
   <rect x="70" y="470" width="1060" height="70" rx="8" fill="#05080f" stroke="#1b2d4b" />
   <text x="100" y="512" fill="#00ff9d" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold">stefan@k8s-master:~#</text>
-  <text x="320" y="512" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16">curl -s https://sbakurdzhiev.eu/blog | jq .latest_dispatches</text>
-  <text x="960" y="512" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="15" font-weight="bold">sbakurdzhiev.eu</text>
+  <text x="320" y="512" fill="#e2e8f0" font-family="'JetBrains Mono', monospace" font-size="16">curl -s https://sbakurdzhiev.com/blog | jq .latest_dispatches</text>
+  <text x="960" y="512" fill="#00d4ff" font-family="'JetBrains Mono', monospace" font-size="15" font-weight="bold">sbakurdzhiev.com</text>
 </svg>

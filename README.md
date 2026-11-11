@@ -87,4 +87,4 @@ Within the interactive shell, you can execute:
 - **Email**: [stefan.bakurdzhiev@gmail.com](mailto:stefan.bakurdzhiev@gmail.com)
 - **LinkedIn**: [Stefan Bakurdzhiev](https://www.linkedin.com/in/stefan-bakurdzhiev-055a3a113/)
 - **GitHub**: [github.com/sbakurdzhiev](https://github.com/sbakurdzhiev)
-- **Portfolio Domain**: [sbakurdzhiev.eu](https://sbakurdzhiev.eu)
+- **Portfolio Domain**: [sbakurdzhiev.com](https://sbakurdzhiev.com)

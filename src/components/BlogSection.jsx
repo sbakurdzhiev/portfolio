@@ -3,7 +3,7 @@ import {
   BookOpen, Calendar, Clock, Tag, Search, ArrowRight, 
   ChevronLeft, Terminal, Shield, Cpu, GitBranch, Users, 
   Share2, Check, ExternalLink, Bookmark, Edit3, PlusCircle, 
-  Copy, Sparkles, Send, Linkedin
+  Copy, Sparkles, Send, Linkedin, Lock
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 import { PublishingStudioModal } from './PublishingStudioModal';
@@ -316,8 +316,8 @@ export const BlogSection = () => {
   };
 
   const getCanonicalPostUrl = () => {
-    if (!selectedArticle) return 'https://sbakurdzhiev.eu/';
-    return `https://sbakurdzhiev.eu/?tab=blog&post=${encodeURIComponent(selectedArticle.id)}`;
+    if (!selectedArticle) return 'https://sbakurdzhiev.com/';
+    return `https://sbakurdzhiev.com/?tab=blog&post=${encodeURIComponent(selectedArticle.id)}`;
   };
 
   const handleCopyLink = () => {
@@ -401,9 +401,9 @@ export const BlogSection = () => {
                 setIsCmsOpen(true);
               }}
               className="px-3.5 py-2 rounded bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs flex items-center gap-2 shadow-glow-cyan hover:opacity-90 transition-all cursor-pointer"
-              title="Launch On-the-Go Publishing Studio to post news/guides from mobile or laptop"
+              title="Protected Publishing Studio (Password Required to Draft or Post)"
             >
-              <Edit3 className="w-3.5 h-3.5 fill-black" />
+              <Lock className="w-3.5 h-3.5 fill-black" />
               <span>DRAFT STUDIO [CMS]</span>
             </button>
 

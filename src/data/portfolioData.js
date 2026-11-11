@@ -13,7 +13,7 @@ export const profileData = {
   email: "stefan.bakurdzhiev@gmail.com",
   linkedin: "https://www.linkedin.com/in/stefan-bakurdzhiev-055a3a113/",
   github: "https://github.com/sbakurdzhiev",
-  portfolioUrl: "https://sbakurdzhiev.eu",
+  portfolioUrl: "https://sbakurdzhiev.com",
 
   metrics: [
     { label: "PROD UPTIME", value: "99.99%", sub: "Enterprise SLA", status: "NOMINAL" },

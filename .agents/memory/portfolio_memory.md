@@ -29,4 +29,4 @@
 * Adding animated terminal typing effect to the hero headline.
 * Adding a downloadable PDF CV button in the header and terminal CLI.
 * Adding theme switcher (Option C Cyber Slate / Option A Tokyo Night / Option B Amber CRT).
-* Connecting custom domain `sbakurdzhiev.eu` with Cloudflare SSL.
+* Connecting custom domain `sbakurdzhiev.com` with Cloudflare SSL.

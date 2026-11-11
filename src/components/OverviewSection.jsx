@@ -269,7 +269,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
             <span className="text-cyber-cyan">contacts:</span>{'\n'}
             {'  '}<span className="text-cyber-cyan">email:</span> <span className="text-cyber-cyan">stefan.bakurdzhiev@gmail.com</span>{'\n'}
             {'  '}<span className="text-cyber-cyan">github:</span> <span className="text-cyber-cyan">https://github.com/sbakurdzhiev</span>{'\n'}
-            {'  '}<span className="text-cyber-cyan">portfolio:</span> <span className="text-cyber-cyan">https://sbakurdzhiev.eu</span>
+            {'  '}<span className="text-cyber-cyan">portfolio:</span> <span className="text-cyber-cyan">https://sbakurdzhiev.com</span>
           </pre>
         )}
       </div>
