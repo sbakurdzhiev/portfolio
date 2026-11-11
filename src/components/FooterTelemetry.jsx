@@ -7,17 +7,38 @@ export const FooterTelemetry = () => {
   const [senderEmail, setSenderEmail] = useState('');
   const [message, setMessage] = useState('');
   const [transmitted, setTransmitted] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!senderEmail || !message) return;
+    setFormError('');
+
+    const emailClean = senderEmail.trim();
+    const messageClean = message.trim();
+
+    if (!emailClean || !messageClean) {
+      setFormError('Please fill out all required fields.');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailClean)) {
+      setFormError('Invalid email format. Please check your address.');
+      sound.playBeep(220, 0.1);
+      return;
+    }
+
+    // Sanitize against CRLF email header injection
+    const sanitizedEmail = emailClean.replace(/[\r\n]/g, '').slice(0, 100);
+    const sanitizedMessage = messageClean.slice(0, 2500);
 
     sound.playDeploySuccess();
     setTransmitted(true);
 
     // Create mailto link as fallback to ensure delivery
-    const subject = encodeURIComponent(`[DevOps Inquiry from Portfolio] Contact from ${senderEmail}`);
-    const body = encodeURIComponent(message);
+    const subject = encodeURIComponent(`[DevOps Inquiry] Contact from ${sanitizedEmail}`);
+    const body = encodeURIComponent(sanitizedMessage);
     window.location.href = `mailto:${profileData.email}?subject=${subject}&body=${body}`;
 
     setTimeout(() => {
@@ -71,7 +92,7 @@ export const FooterTelemetry = () => {
                 <a
                   href={profileData.github}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border text-slate-200 hover:text-white hover:border-cyber-cyan text-xs flex items-center gap-2 transition-colors"
                 >
                   <Github className="w-3.5 h-3.5" />
@@ -81,7 +102,7 @@ export const FooterTelemetry = () => {
                 <a
                   href={profileData.linkedin}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border text-slate-200 hover:text-white hover:border-cyber-cyan text-xs flex items-center gap-2 transition-colors"
                 >
                   <Linkedin className="w-3.5 h-3.5 text-blue-400" />
@@ -91,7 +112,7 @@ export const FooterTelemetry = () => {
                 <a
                   href={profileData.portfolioUrl}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded bg-cyber-panel border border-cyber-border text-slate-200 hover:text-white hover:border-cyber-cyan text-xs flex items-center gap-2 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-cyber-cyan" />
@@ -110,14 +131,24 @@ export const FooterTelemetry = () => {
                 <span className="text-[10px] text-cyber-muted">PROTOCOL: SMTP / TLS</span>
               </div>
 
+              {formError && (
+                <div className="text-xs text-red-400 p-2 bg-red-500/10 border border-red-500/30 rounded">
+                  {formError}
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label className="text-[11px] text-cyber-muted block">YOUR SENDER ADDRESS</label>
                 <input
                   type="email"
                   required
+                  maxLength={100}
                   placeholder="recruiter@enterprise.com"
                   value={senderEmail}
-                  onChange={(e) => setSenderEmail(e.target.value)}
+                  onChange={(e) => {
+                    setSenderEmail(e.target.value);
+                    if (formError) setFormError('');
+                  }}
                   className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-mono"
                 />
               </div>
@@ -127,9 +158,13 @@ export const FooterTelemetry = () => {
                 <textarea
                   required
                   rows={4}
+                  maxLength={2500}
                   placeholder="Looking for a Senior DevOps / Platform Engineer for our Kubernetes & OpenShift infrastructure..."
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                    if (formError) setFormError('');
+                  }}
                   className="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-mono resize-none"
                 />
               </div>

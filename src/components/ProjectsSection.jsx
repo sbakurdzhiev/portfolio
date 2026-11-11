@@ -70,7 +70,7 @@ export const ProjectsSection = () => {
                   <a
                     href={project.repo}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     title="View GitHub Repository"
                     className="p-1 rounded bg-cyber-bg border border-cyber-border text-slate-300 hover:text-white hover:border-cyber-cyan transition-colors"
                   >
@@ -136,7 +136,7 @@ export const ProjectsSection = () => {
                 <a
                   href={project.repo}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-cyber-cyan hover:underline flex items-center gap-1 text-[11px] font-bold"
                 >
                   <span>Inspect Repo</span>

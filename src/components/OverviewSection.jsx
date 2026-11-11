@@ -105,7 +105,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
               <a
                 href={profileData.github}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Github className="w-3.5 h-3.5 text-white" />
@@ -115,7 +115,7 @@ export const OverviewSection = ({ onNavigateTab, onOpenCli }) => {
               <a
                 href={profileData.linkedin}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="px-3.5 py-2.5 rounded bg-cyber-bg border border-cyber-border hover:border-cyber-cyan text-slate-200 hover:text-white font-mono text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Linkedin className="w-3.5 h-3.5 text-blue-400" />

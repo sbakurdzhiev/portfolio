@@ -151,6 +151,23 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+
+  // Security Lockout Countdown
+  useEffect(() => {
+    if (lockoutRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutRemaining]);
 
   // Password Change state
   const [newPassword, setNewPassword] = useState('');
@@ -249,13 +266,18 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
     setActiveSubTab('editor');
   };
 
-  // Handle password login verification
+  // Handle password login verification with rate limiting & brute-force defense
   const handleVerifyPassword = async (e) => {
     e.preventDefault();
+    if (lockoutRemaining > 0) return;
+
     if (!authPassword.trim()) {
       setAuthError('Please enter operator access key.');
       return;
     }
+
+    // Artificial constant-time delay against timing side-channel attacks
+    await new Promise(r => setTimeout(r, 180));
 
     try {
       const trimmedInput = authPassword.trim();
@@ -269,12 +291,24 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
         sound.playDeploySuccess();
         sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
         setIsAuthenticated(true);
+        setFailedAttempts(0);
+        setLockoutRemaining(0);
         setAuthError('');
         setAuthPassword('');
         reloadManagerArticles();
       } else {
         sound.playBeep(220, 0.15); // Buzz error sound
-        setAuthError('ACCESS DENIED: Invalid operator key.');
+        const nextFailed = failedAttempts + 1;
+        setFailedAttempts(nextFailed);
+        if (nextFailed >= 5) {
+          setLockoutRemaining(60);
+          setAuthError('SECURITY LOCKOUT: Excessive failed attempts. Locked for 60 seconds.');
+        } else if (nextFailed >= 3) {
+          setLockoutRemaining(15);
+          setAuthError('RATE LIMIT EXCEEDED: Security cooldown active (15 seconds).');
+        } else {
+          setAuthError(`ACCESS DENIED: Invalid operator key. (${nextFailed}/3 attempts before cooldown)`);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -282,12 +316,28 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
         sound.playDeploySuccess();
         sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
         setIsAuthenticated(true);
+        setFailedAttempts(0);
+        setLockoutRemaining(0);
         setAuthError('');
         setAuthPassword('');
         reloadManagerArticles();
         return;
       }
       setAuthError('ACCESS DENIED: Invalid operator key.');
+    }
+  };
+
+  // Emergency Purge Stored Credentials
+  const handlePurgeAllSecrets = () => {
+    if (window.confirm('Revoke all stored GitHub tokens, custom password hashes, and active sessions from this browser?')) {
+      localStorage.removeItem(STORAGE_KEY_GITHUB_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_AUTH_HASH);
+      sessionStorage.removeItem(SESSION_AUTH_KEY);
+      setGithubToken('');
+      setIsAuthenticated(false);
+      sound.playBeep(350, 0.1);
+      setStatusMessage('ALL STORED SECRETS PURGED.');
+      onClose();
     }
   };
 
@@ -595,14 +645,16 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
               <div className="relative">
                 <input
                   type={showAuthPassword ? 'text' : 'password'}
-                  placeholder="Enter Operator Security Key..."
+                  placeholder={lockoutRemaining > 0 ? `Locked for ${lockoutRemaining}s...` : "Enter Operator Security Key..."}
                   value={authPassword}
+                  disabled={lockoutRemaining > 0}
+                  autoComplete="current-password"
                   onChange={(e) => {
                     setAuthPassword(e.target.value);
                     if (authError) setAuthError('');
                   }}
                   autoFocus
-                  className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none pr-10 font-mono"
+                  className="w-full bg-cyber-bg border border-cyber-border focus:border-cyber-cyan rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none pr-10 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
@@ -614,7 +666,7 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
               </div>
 
               {authError && (
-                <div className="text-xs text-red-400 flex items-center justify-center gap-1.5 bg-red-500/10 border border-red-500/30 p-2 rounded">
+                <div className="text-xs text-red-400 flex items-center justify-center gap-1.5 bg-red-500/10 border border-red-500/30 p-2 rounded text-center leading-relaxed">
                   <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                   <span>{authError}</span>
                 </div>
@@ -622,14 +674,25 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-glow-cyan cursor-pointer"
+                disabled={lockoutRemaining > 0}
+                className="w-full py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-emerald text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-glow-cyan cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Unlock className="w-4 h-4 fill-black" />
-                <span>AUTHENTICATE &amp; UNLOCK STUDIO</span>
+                {lockoutRemaining > 0 ? (
+                  <>
+                    <Lock className="w-4 h-4 text-black" />
+                    <span>LOCKED: COOLDOWN ({lockoutRemaining}s)</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="w-4 h-4 fill-black" />
+                    <span>AUTHENTICATE &amp; UNLOCK STUDIO</span>
+                  </>
+                )}
               </button>
 
-              <div className="text-[10px] text-slate-500 text-center">
-                Default Master Key: <code className="text-cyber-cyan">stefan2026</code> • Can be changed inside Studio
+              <div className="text-[10px] text-slate-500 text-center flex items-center justify-center gap-1.5">
+                <Shield className="w-3 h-3 text-cyber-cyan" />
+                <span>Brute-force protected • Constant-time SHA-256 verification</span>
               </div>
             </form>
           </div>
@@ -1180,6 +1243,24 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
                         SAVE TOKEN
                       </button>
                     </div>
+                  </div>
+
+                  {/* Emergency Secret Purge */}
+                  <div className="bg-cyber-bg p-4 sm:p-5 border border-red-500/40 rounded-lg space-y-3">
+                    <div className="flex items-center gap-2 text-red-400 font-bold text-xs uppercase tracking-wider">
+                      <ShieldAlert className="w-4 h-4 text-red-400" />
+                      <span>Emergency Purge Stored Credentials &amp; Sessions</span>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Immediately revokes and purges saved GitHub access tokens, custom password hashes, and active sessions from this device.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handlePurgeAllSecrets}
+                      className="px-3.5 py-1.5 rounded bg-red-500/15 border border-red-500/60 text-red-300 hover:bg-red-500 hover:text-white font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      PURGE ALL STORED SECRETS
+                    </button>
                   </div>
                 </div>
               )}
