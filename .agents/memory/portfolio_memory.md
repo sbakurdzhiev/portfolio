@@ -21,7 +21,7 @@
 * **Public URLs**:
   - `http://79.76.35.169:3000`
   - `http://79.76.35.169`
-* **Git Repository**: Initialized on `main` branch with 2 commits. Ready to push to `https://github.com/sbakurdzhiev/portfolio.git`.
+* **Git Repository**: Pushed and tracking `git@github.com:sbakurdzhiev/portfolio.git` on branch `main`. Author: `dottysbb@gmail.com`.
 
 ## 📋 Next Potential Enhancements
 * Adding animated terminal typing effect to the hero headline.
