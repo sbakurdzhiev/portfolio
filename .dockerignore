@@ -1,0 +1,14 @@
+# Keep the build context minimal and free of local state / secrets.
+# Without this, `COPY . .` overwrote the freshly `npm ci`-ed node_modules
+# with the host's copy and shipped .git/.env into the builder layer.
+node_modules
+dist
+.git
+.github
+.agents
+.vscode
+.idea
+.env
+.env.*
+*.local
+k8s

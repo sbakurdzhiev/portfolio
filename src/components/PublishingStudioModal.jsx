@@ -20,8 +20,23 @@ const STORAGE_KEY_GITHUB_TOKEN = 'portfolio-github-pat';
 const STORAGE_KEY_AUTH_HASH = 'portfolio-cms-auth-hash';
 const SESSION_AUTH_KEY = 'portfolio-cms-session-auth';
 
-// SHA-256 of default key "stefan2026"
-const DEFAULT_HASH = '2a553cc2f67a5cfd1e0620c6ddb444ce57612f911560e4aea4fd897af862c428';
+// Build-time configured access key hash (SHA-256 hex of your passphrase).
+// Set VITE_CMS_KEY_HASH in .env.local or as a CI variable; never commit the plaintext key.
+// NOTE: this is a client-side UI gate only. The real credential protecting the repo
+// is the GitHub token, which is never bundled and only lives in this browser session.
+const CONFIGURED_HASH = String(import.meta.env.VITE_CMS_KEY_HASH || '').trim().toLowerCase();
+
+// Strict slug format used for repository file paths (prevents path traversal like "../")
+const sanitizeSlug = (value) =>
+  String(value || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/(^-|-$)/g, '').slice(0, 100);
+
+// Length-independent comparison of two hex digests
+const safeEqual = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+};
 
 /**
  * Universal SHA-256 hashing function
@@ -218,9 +233,11 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
     }
   }, [isOpen, initialPost]);
 
-  // Load saved token on mount
+  // Load saved token on mount (session-scoped; purge any legacy persistent copy)
   useEffect(() => {
-    const savedToken = localStorage.getItem(STORAGE_KEY_GITHUB_TOKEN);
+    const legacyToken = localStorage.getItem(STORAGE_KEY_GITHUB_TOKEN);
+    if (legacyToken) localStorage.removeItem(STORAGE_KEY_GITHUB_TOKEN);
+    const savedToken = sessionStorage.getItem(STORAGE_KEY_GITHUB_TOKEN);
     if (savedToken) setGithubToken(savedToken);
   }, []);
 
@@ -279,15 +296,16 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
     // Artificial constant-time delay against timing side-channel attacks
     await new Promise(r => setTimeout(r, 180));
 
+    const expectedHash = (localStorage.getItem(STORAGE_KEY_AUTH_HASH) || CONFIGURED_HASH).toLowerCase();
+    if (!expectedHash) {
+      setAuthError('STUDIO NOT CONFIGURED: set VITE_CMS_KEY_HASH at build time.');
+      return;
+    }
+
     try {
-      const trimmedInput = authPassword.trim();
-      const inputHash = await computeSha256(trimmedInput);
-      const expectedHash = localStorage.getItem(STORAGE_KEY_AUTH_HASH) || DEFAULT_HASH;
+      const inputHash = await computeSha256(authPassword.trim());
 
-      const isDefaultMatch = trimmedInput === 'stefan2026' || inputHash === DEFAULT_HASH;
-      const isStoredMatch = expectedHash && inputHash === expectedHash;
-
-      if (isDefaultMatch || isStoredMatch) {
+      if (safeEqual(inputHash, expectedHash)) {
         sound.playDeploySuccess();
         sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
         setIsAuthenticated(true);
@@ -312,17 +330,6 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
       }
     } catch (err) {
       console.error(err);
-      if (authPassword.trim() === 'stefan2026') {
-        sound.playDeploySuccess();
-        sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
-        setIsAuthenticated(true);
-        setFailedAttempts(0);
-        setLockoutRemaining(0);
-        setAuthError('');
-        setAuthPassword('');
-        reloadManagerArticles();
-        return;
-      }
       setAuthError('ACCESS DENIED: Invalid operator key.');
     }
   };
@@ -331,6 +338,7 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
   const handlePurgeAllSecrets = () => {
     if (window.confirm('Revoke all stored GitHub tokens, custom password hashes, and active sessions from this browser?')) {
       localStorage.removeItem(STORAGE_KEY_GITHUB_TOKEN);
+      sessionStorage.removeItem(STORAGE_KEY_GITHUB_TOKEN);
       localStorage.removeItem(STORAGE_KEY_AUTH_HASH);
       sessionStorage.removeItem(SESSION_AUTH_KEY);
       setGithubToken('');
@@ -510,10 +518,12 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
     setStatusMessage('Connecting to GitHub API...');
 
     try {
-      localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
+      sessionStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
       const article = buildCurrentArticleObject('published');
+      const safeSlug = sanitizeSlug(article.slug);
+      if (!safeSlug) throw new Error('Invalid slug: use letters, numbers and dashes only.');
       const today = new Date().toISOString().split('T')[0];
-      const filename = `src/content/posts/${today}-${article.slug}.md`;
+      const filename = `src/content/posts/${today}-${safeSlug}.md`;
       const mdPayload = buildMarkdownPayload(article);
       const contentBase64 = btoa(unescape(encodeURIComponent(mdPayload)));
 
@@ -1217,25 +1227,25 @@ export const PublishingStudioModal = ({ isOpen, onClose, onPostPublished, initia
                       <span>Direct GitHub API Publisher (For Phone Commits)</span>
                     </div>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Store your fine-grained GitHub Personal Access Token (`ghp_...` with `Contents: Read and write`) to push new `.md` field log commits straight from mobile browsers to `sbakurdzhiev/portfolio`.
+                      Store your fine-grained GitHub Personal Access Token (`github_pat_...` scoped to this repository only, with `Contents: Read and write`; kept for this browser session only) to push new `.md` field log commits straight from mobile browsers to `sbakurdzhiev/portfolio`.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-2 max-w-lg">
                       <input
                         type="password"
-                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                        placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx"
                         value={githubToken}
                         onChange={(e) => {
                           setGithubToken(e.target.value);
-                          localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, e.target.value);
+                          sessionStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, e.target.value);
                         }}
                         className="flex-1 bg-cyber-surface border border-cyber-border rounded p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyber-cyan font-mono"
                       />
                       <button
                         type="button"
                         onClick={() => {
-                          localStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
-                          setStatusMessage('GitHub Token saved locally.');
+                          sessionStorage.setItem(STORAGE_KEY_GITHUB_TOKEN, githubToken);
+                          setStatusMessage('GitHub Token saved for this browser session only.');
                           sound.playDeploySuccess();
                         }}
                         className="px-4 py-2 rounded bg-cyber-emerald/15 border border-cyber-emerald/50 text-cyber-emerald hover:bg-cyber-emerald hover:text-black font-bold text-xs transition-colors cursor-pointer"

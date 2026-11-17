@@ -7,10 +7,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+# Least privilege by default; only the deploy job (never run for PRs) gets Pages/OIDC scopes
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -32,8 +31,13 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Audit Dependencies
+        run: npm audit --audit-level=high
+
       - name: Build Production Bundle
         run: npm run build
+        env:
+          VITE_CMS_KEY_HASH: ${{ vars.VITE_CMS_KEY_HASH }}
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -43,6 +47,9 @@ jobs:
   deploy-pages:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     needs: build-and-test
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

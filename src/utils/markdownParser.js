@@ -6,6 +6,23 @@
 const STORAGE_CUSTOM_POSTS = 'portfolio-custom-posts';
 
 /**
+ * Serialize a value as a safe double-quoted YAML scalar (escapes \\ and ", collapses newlines)
+ */
+const yamlStr = (value) =>
+  `"${String(value ?? '').replace(/[\r\n]+/g, ' ').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+
+/**
+ * Strip surrounding quotes from a frontmatter value and undo yamlStr escaping
+ */
+const unquote = (value) => {
+  const v = String(value).trim();
+  if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+    return v.slice(1, -1).replace(/\\(["\\])/g, '$1');
+  }
+  return v.replace(/^["']|["']$/g, '');
+};
+
+/**
  * Parse YAML-style frontmatter from a raw markdown string without heavy external dependencies
  */
 export function parseMarkdownWithFrontmatter(rawMarkdown, fallbackId = '') {
@@ -63,10 +80,10 @@ export function parseMarkdownWithFrontmatter(rawMarkdown, fallbackId = '') {
 
     if (inFrontmatter) {
       // Check for array item continuation
-      const arrayItemMatch = line.match(/^\s*-\s*["']?(.*?)["']?$/);
+      const arrayItemMatch = line.match(/^\s*-\s*(.*)$/);
       if (arrayItemMatch && currentArrayKey) {
         if (!meta[currentArrayKey]) meta[currentArrayKey] = [];
-        meta[currentArrayKey].push(arrayItemMatch[1]);
+        meta[currentArrayKey].push(unquote(arrayItemMatch[1]));
         continue;
       }
 
@@ -86,13 +103,13 @@ export function parseMarkdownWithFrontmatter(rawMarkdown, fallbackId = '') {
           const items = rawValue
             .slice(1, -1)
             .split(',')
-            .map(item => item.trim().replace(/^["']|["']$/g, ''))
+            .map(item => unquote(item))
             .filter(Boolean);
           meta[key] = items;
         } else {
           currentArrayKey = null;
           // Clean quotes
-          meta[key] = rawValue.replace(/^["']|["']$/g, '');
+          meta[key] = unquote(rawValue);
         }
       }
     }
@@ -238,17 +255,17 @@ export function buildMarkdownPayload(article) {
 
   const frontmatter = [
     '---',
-    `title: "${title}"`,
-    `slug: "${slug}"`,
-    `date: "${date}"`,
-    `category: "${category}"`,
-    `readTime: "${readTime}"`,
-    `status: "${status}"`,
-    scheduledDate ? `scheduledDate: "${scheduledDate}"` : null,
-    `tags: [${tagsArray.map(t => `"${t}"`).join(', ')}]`,
-    `summary: "${summary.replace(/"/g, '\\"')}"`,
+    `title: ${yamlStr(title)}`,
+    `slug: ${yamlStr(slug)}`,
+    `date: ${yamlStr(date)}`,
+    `category: ${yamlStr(category)}`,
+    `readTime: ${yamlStr(readTime)}`,
+    `status: ${yamlStr(status)}`,
+    scheduledDate ? `scheduledDate: ${yamlStr(scheduledDate)}` : null,
+    `tags: [${tagsArray.map(t => yamlStr(String(t).replace(/,/g, ' '))).join(', ')}]`,
+    `summary: ${yamlStr(summary)}`,
     highlightsArray.length > 0 ? 'highlights:' : null,
-    ...highlightsArray.map(h => `  - "${h.replace(/"/g, '\\"')}"`),
+    ...highlightsArray.map(h => `  - ${yamlStr(h)}`),
     '---',
     '',
     content
@@ -266,9 +283,9 @@ export function buildSyndicationPayload(article, canonicalBase = 'https://sbakur
 
   const frontmatter = [
     '---',
-    `title: "${article.title}"`,
+    `title: ${yamlStr(article.title)}`,
     `published: true`,
-    `description: "${(article.summary || '').replace(/"/g, '\\"')}"`,
+    `description: ${yamlStr(article.summary || '')}`,
     `tags: [${tagsArray.map(t => t.toLowerCase().replace(/[^a-z0-9]/g, '')).join(', ')}]`,
     `canonical_url: ${canonicalUrl}`,
     '---',
